@@ -1,0 +1,331 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_guarnicao",
+      "description": "Retorna guarnições/comandantes de viaturas do último snapshot do Mapa de Força. Pelo menos um filtro entre 'municipio' e 'estacao' é obrigatório. Retorna Cmt + telefone se operando, telefone do quartel se reserva/baixada.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "municipio": {
+            "type": "string",
+            "description": "Município do Vale do Paraíba/Litoral (Taubaté, Aparecida, São Sebastião, etc.). Opcional se estacao informado."
+          },
+          "estacao": {
+            "type": "string",
+            "description": "Parte do nome da estação/bairro (Ana Emilia, Bom Conselho). Opcional se municipio informado."
+          },
+          "viatura": {
+            "type": "string",
+            "description": "Prefixo do tipo de viatura: AB, ABS, UR, VO, AT, TP, CM, MT, AC, AE, VT, SK, MOB, UT, BOTE."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "buscar_militar",
+      "description": "Busca dados de um militar por RE (número) ou por parte do nome. Retorna posto, nome, OPM, situação.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar (apenas número, sem hífen). Ex: 900044."
+          },
+          "nome": {
+            "type": "string",
+            "description": "Parte do nome (fuzzy). Ex: 'silva'."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_ias",
+      "description": "Status da IAS (Inspeção Anual de Saúde) de um militar. Retorna EM DIA / EXPIRANDO / ATRASADA / SEM IAS + validade.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar. Obrigatório."
+          }
+        },
+        "required": [
+          "re"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_restricoes",
+      "description": "Restrições médicas vigentes de um militar.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar. Obrigatório."
+          }
+        },
+        "required": [
+          "re"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_taf",
+      "description": "Último TAF (Teste de Aptidão Física) finalizado de um militar.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar. Obrigatório."
+          }
+        },
+        "required": [
+          "re"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "resumo_operacional",
+      "description": "Resumo operacional atual do 11º GB: viaturas por situação (operando/reserva/baixada), efetivo, água, mergulhadores. Detalhado por SGB. Retorna campo 'frescor' com idade do dado.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_saude_geral",
+      "description": "Overview de saúde do 11º GB: quantos militares com IAS EM DIA / ATRASADA / SEM IAS + total com restrições vigentes. Sem parâmetros.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_efetivo_por_lotacao",
+      "description": "Quantitativo de militares ativos por lotação (EM, 1º SGB, 2º SGB, 3º SGB, 4º SGB). Sem parâmetros.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "dossie_militar",
+      "description": "Dossiê CONSOLIDADO de um militar: dados básicos + IAS + TAF + restrições vigentes em uma única resposta. Cruza 4 domínios. Use quando o Comandante pedir 'situação completa', 'dossiê', 'panorama' ou 'tudo sobre' um RE.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar. Obrigatório."
+          }
+        },
+        "required": [
+          "re"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_ias_por_sgb",
+      "description": "IAS por SGB: distribuição de EM DIA / EXPIRANDO / ATRASADA / SEM IAS em cada lotação (1º SGB, 2º SGB, 3º SGB, 4º SGB, EM). Mostra onde o problema de saúde está concentrado.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_efetivo_disponivel_por_sgb",
+      "description": "Efetivo REAL disponível por SGB = ativos MENOS quem tem restrição vigente ou LTS. Métrica-chave pra saber quem efetivamente pode subir viatura.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "identificar_remetente",
+      "description": "Identifica quem está falando pelo número de WhatsApp/telefone. Retorna posto, nome, RE, apelido, papel (Cmt Geral, Subcmt, Oficial, Praça) e a 'forma_tratamento' correta. Se conhecido: true, trate a pessoa por 'forma_tratamento' toda a sessão. Se conhecido: false, use 'Comandante' genérico.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "telefone": {
+            "type": "string",
+            "description": "Número do WhatsApp em qualquer formato (com/sem hífens, com/sem DDI). Ex: 11900000003 ou 11 90000-0003."
+          }
+        },
+        "required": [
+          "telefone"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "listar_com_restricao",
+      "description": "LISTA COMPLETA de militares com restrição vigente (nome, posto, SGB, motivo). USE quando o Comandante quiser SABER QUEM está com restrição — 'quem está de restrição', 'me lista os afastados', 'quem não pode operar'. NÃO chame consultar_restricoes múltiplas vezes: esta traz tudo de uma vez. Filtro opcional por lotação (1º SGB, 2º SGB, EM, etc).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "lotacao": {
+            "type": "string",
+            "description": "Filtro por lotação (1º SGB, 2º SGB, 3º SGB, 4º SGB, EM). Opcional — se ausente, retorna todos."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "listar_com_ias_atrasada",
+      "description": "LISTA COMPLETA de militares com IAS ATRASADA ou SEM IAS (nome, posto, SGB, validade). USE quando o Comandante quiser SABER QUEM está com IAS pendente — 'quem está com IAS vencida', 'me passa os nomes dos atrasados de IAS'. Filtro opcional por lotação.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "lotacao": {
+            "type": "string",
+            "description": "Filtro por lotação. Opcional."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_uge_resumo",
+      "description": "📁 Resumo dos processos administrativos da UGE (Unidade de Gestão Estratégica): total, em andamento, encerrados, cancelados, valor empenhado/liquidado, vencidos. Aceita filtro por ano.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ano": {
+            "type": "string",
+            "description": "Ano dos processos (ex: 2025, 2026). Opcional."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_uge_vencidos",
+      "description": "📁 Lista processos UGE em andamento com entrega VENCIDA (empenhada e prorrogada expiradas). Usar quando o Comandante perguntar 'quais processos estão atrasados' ou 'me passa os vencidos'.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_elogios_resumo",
+      "description": "🎖️ Resumo de elogios/láureas do 11º GB: total por tipo (ELO=elogio, LMP=louvor menção pessoal, LOU=louvor) e por SGB. Aceita filtro por ano.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ano": {
+            "type": "string",
+            "description": "Ano dos elogios. Opcional."
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_elogios_militar",
+      "description": "🎖️ Retorna todos os elogios/láureas de um militar específico. Requer RE.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "re": {
+            "type": "string",
+            "description": "RE do militar. Obrigatório."
+          }
+        },
+        "required": [
+          "re"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_motomec_resumo",
+      "description": "🚛 Resumo da frota COMPLETA (Motomec — 189 viaturas): total, operando, baixadas, em descarga, idade média, % baixadas. DIFERENÇA do resumo_operacional: Motomec = frota total; resumo_operacional = apenas viaturas escaladas no serviço do dia.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "consultar_motomec_baixadas",
+      "description": "🚛 Lista viaturas baixadas/em descarga da frota. Filtro opcional por SGB (1º SGB, 2º SGB, etc.). Usar quando o Comandante quiser SABER QUAIS viaturas estão baixadas.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sgb": {
+            "type": "string",
+            "description": "Filtro por SGB (ex: '1º SGB'). Opcional."
+          }
+        },
+        "required": []
+      }
+    }
+  }
+]

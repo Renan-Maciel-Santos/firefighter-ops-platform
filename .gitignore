@@ -1,0 +1,107 @@
+# ==========================================================================
+# .gitignore — plataforma de dados do 11º GB
+# ==========================================================================
+# Regra que orienta tudo abaixo: versiona-se o CÓDIGO e a CONFIGURAÇÃO de
+# exemplo. Segredo, dado volumoso e artefato gerado ficam de fora.
+# ==========================================================================
+
+# ---------------------------------------------------------------- segredos
+# .env guarda as senhas do Postgres, a chave do JWT e os tokens das integrações.
+# .env.example fica versionado de propósito, como documentação das variáveis.
+.env
+.env.local
+*.env
+!.env.example
+
+# Acima: Credenciais de service account (Google Sheets do mapa de força) e afins.
+# O lugar delas é credentials/, fora do git.
+credentials/
+*service-account*.json
+*service_account*.json
+*credential*.json
+*.pem
+*.key
+*.pfx
+
+# Acima: QR de pareamento do WhatsApp — é material de sessão, não código.
+n8n/qrcode*.png
+logs/*qr*.txt
+
+# Acima: Exports do workflow do n8n. São DUMPS, não fonte — a verdade vive no banco
+# n8n_bia, e a cópia legível sai todo dia em backups/<data>/n8n/workflow_bia.json,
+# pelo backup_11gb.py. Ficam fora do git porque carregam a apikey da Evolution
+# embutida nos nós HTTP.
+n8n/workflow_*.json
+n8n/workflows/*.json
+
+# Para versioná-los de verdade: mover a apikey dos nós HTTP para uma credencial
+# Header Auth do n8n, reexportar, conferir que a chave sumiu e só então remover
+# esta linha. Ver n8n/workflows/README.md.
+
+# ------------------------------------------------------------ dados pesados
+# Acima: Export bruto do SDOV2 com o tempo-resposta (13 MB, 371 mil linhas). Mesma
+# regra do export do COBOM, que também mora fora do repo: a fonte de um ETL não é
+# fonte de código. O que vale versionar é o B3/tempo_resposta_etl.py que a lê e o
+# schema que ela alimenta — o dado em si já está no Postgres depois da carga.
+# Os três agregados menores da mesma pasta ficam versionados, como os de
+# dados_externos/, porque são pequenos e servem de referência do recorte.
+tempo_resposta/tempo resposta completo.xlsx
+
+# Acima: Dumps do Postgres (69 MB). Backup é responsabilidade de backup, não de git.
+backups/
+*.dump
+*.sql.gz
+*.bak
+
+# Acima: Bancos SQLite locais
+*.db
+*.sqlite
+*.sqlite3
+
+# ------------------------------------------------------- artefatos gerados
+logs/
+*.log
+
+# Acima: Saída de diagnóstico do capturador quando o login falha
+debug_login.png
+debug_login.html
+erro_*.png
+
+# Acima: Planilhas exportadas na hora pelo exportar_view.py, que carimba data/hora no nome
+*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9].xlsx
+
+# ------------------------------------------------------------------ python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# -------------------------------------------------------------------- SO/IDE
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+~$*
+
+# ------------------------------------------- repositório público (demonstração)
+# Esta cópia é a versão de portfólio: planilhas, documentos e apresentações da
+# unidade não entram, nem por engano. O modelo da OS do EAP é gerado no build
+# por webapp/modelos/gerar_modelo_padrao.py.
+*.xlsx
+*.xls
+*.csv
+*.docx
+*.pptx
+*.pdf
+*.png
+*.jpg
+avaliacao_llm/resultado_*.json
+avaliacao_llm/alucinacao_*.json
+# Acima: as capturas do README são geradas com dados fictícios (scripts/capturar_telas.py)
+!docs/images/*.png
+# Acima: o modelo da OS do EAP é gerado no build (webapp/modelos/gerar_modelo_padrao.py)
+webapp/modelos/*.docx

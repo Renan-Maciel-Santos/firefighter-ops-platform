@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>11º GB PMESP — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f1117; }
+    .btn-primary { background: #B22222; }
+    .btn-primary:hover { background: #8b1a1a; }
+    .input-field {
+      background: #1e2230;
+      border: 1px solid #2d3348;
+      color: #e2e8f0;
+    }
+    .input-field:focus { outline: none; border-color: #B22222; box-shadow: 0 0 0 2px rgba(178,34,34,0.3); }
+    .card { background: #161b27; border: 1px solid #1e2535; }
+    .logo-circle { background: #B22222; }
+    .spinner { border-top-color: #B22222; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-sm px-4">
+    <div class="card rounded-2xl p-8 shadow-2xl">
+      <!-- Logo -->
+      <div class="flex flex-col items-center mb-8">
+        <div class="logo-circle w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-lg">
+          <svg class="w-9 h-9 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+          </svg>
+        </div>
+        <h1 class="text-white text-xl font-bold tracking-wide">11º Grupamento de Bombeiros</h1>
+        <p class="text-gray-400 text-sm mt-1">PMESP — Sistema Interno</p>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" autocomplete="off">
+        <div class="mb-4">
+          <label class="block text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">Matrícula</label>
+          <input
+            id="matricula"
+            type="text"
+            placeholder="Ex: 123456"
+            class="input-field w-full px-4 py-3 rounded-lg text-sm transition-all"
+            required
+          />
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">Senha</label>
+          <input
+            id="senha"
+            type="password"
+            placeholder="••••••••"
+            class="input-field w-full px-4 py-3 rounded-lg text-sm transition-all"
+            required
+          />
+        </div>
+
+        <!-- Error -->
+        <div id="errorMsg" class="hidden mb-4 px-4 py-3 rounded-lg bg-red-900/40 border border-red-700 text-red-300 text-sm"></div>
+
+        <button
+          type="submit"
+          id="btnLogin"
+          class="btn-primary w-full py-3 rounded-lg text-white font-semibold text-sm transition-all flex items-center justify-center gap-2"
+        >
+          <span id="btnText">Entrar</span>
+          <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-white/30 rounded-full spinner"></div>
+        </button>
+      </form>
+
+      <p class="text-center text-gray-600 text-xs mt-6">Acesso restrito a militares autorizados</p>
+    </div>
+  </div>
+
+  <script>
+    // Redirect if already logged in
+    if (localStorage.getItem('token')) {
+      window.location.href = '/dashboard';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorMsg = document.getElementById('errorMsg');
+      const btnText = document.getElementById('btnText');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btn = document.getElementById('btnLogin');
+
+      errorMsg.classList.add('hidden');
+      btnText.textContent = 'Autenticando...';
+      btnSpinner.classList.remove('hidden');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            matricula: document.getElementById('matricula').value.trim(),
+            senha: document.getElementById('senha').value,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || 'Erro ao autenticar');
+        }
+
+        localStorage.setItem('token', data.access_token);
+        localStorage.setItem('perfil', data.perfil);
+        localStorage.setItem('nome', data.nome);
+        // Senha provisória: o painel bloqueia até o usuário trocar.
+        localStorage.setItem('trocarSenha', data.deve_trocar_senha ? '1' : '');
+        window.location.href = '/dashboard';
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove('hidden');
+        btnText.textContent = 'Entrar';
+        btnSpinner.classList.add('hidden');
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

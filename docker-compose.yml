@@ -1,0 +1,46 @@
+# Demonstração local: Postgres + webapp com dados fictícios.
+#
+#   cp .env.example .env          (e preencha PG_PASS e JWT_SECRET_KEY)
+#   docker compose up -d --build
+#   docker compose exec webapp python /app/seed/gerar_dados_ficticios.py --recriar
+#   abra http://localhost:8800
+#
+# Os coletores (SGP, SIOPM, SDO) e a B.I.A. (n8n + Evolution) ficam de fora:
+# dependem da intranet e do WhatsApp da unidade. Ver README.
+name: painel-11gb-demo
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${PG_DB:-demo_11gb}
+      POSTGRES_USER: ${PG_USER:-admin}
+      POSTGRES_PASSWORD: ${PG_PASS:?defina PG_PASS no .env}
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${PG_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 20
+
+  webapp:
+    build:
+      context: .
+      dockerfile: docker/webapp.Dockerfile
+    env_file: .env
+    environment:
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      TZ: America/Sao_Paulo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${DEMO_PORT:-8800}:8000"
+
+volumes:
+  pgdata:

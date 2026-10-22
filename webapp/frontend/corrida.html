@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corrida do 11°GB — Inscrições Abertas</title>
+<meta name="description" content="Corrida de Rua do 11° Grupamento de Bombeiros da PMESP. Inscreva-se já!" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bombeiro: { 50:'#fff5f5', 500:'#B22222', 600:'#9b1c1c', 700:'#7c1414', 900:'#3f0a0a' },
+        },
+        fontFamily: {
+          sans: ['Inter','sans-serif'],
+          display: ['Bebas Neue','sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family:'Inter',sans-serif; }
+
+  .hero-bg {
+    background:
+      linear-gradient(135deg, rgba(63,10,10,0.95) 0%, rgba(178,34,34,0.85) 50%, rgba(0,0,0,0.95) 100%),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/></pattern></defs><rect width="1200" height="800" fill="url(%23grid)"/></svg>');
+    background-size: cover;
+    background-position: center;
+  }
+
+  .glow {
+    box-shadow:
+      0 0 20px rgba(178,34,34,0.5),
+      0 0 40px rgba(178,34,34,0.3),
+      0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  .btn-fire {
+    background: linear-gradient(135deg, #B22222 0%, #ef4444 100%);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-fire::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #7c1414 0%, #B22222 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .btn-fire:hover::before { opacity: 1; }
+  .btn-fire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(178,34,34,0.4);
+  }
+  .btn-fire span { position: relative; z-index: 1; }
+
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(178,34,34,0.15);
+  }
+
+  .countdown-num {
+    font-family:'Bebas Neue', sans-serif;
+    background: linear-gradient(180deg, #ffffff 0%, #d1d5db 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  @keyframes pulse-fire {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(178,34,34,0.6); }
+    50%      { box-shadow: 0 0 0 15px rgba(178,34,34,0); }
+  }
+  .pulse-badge { animation: pulse-fire 2s infinite; }
+
+  .section-divider {
+    background: linear-gradient(90deg, transparent 0%, #B22222 50%, transparent 100%);
+    height: 2px;
+  }
+
+  .nav-link::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 2px;
+    background: #B22222;
+    transition: width 0.3s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+</style>
+</head>
+<body class="bg-white text-gray-900">
+
+<!-- NAV -->
+<nav class="fixed top-0 inset-x-0 z-50 bg-black/80 backdrop-blur border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-bombeiro-500 to-bombeiro-700 flex items-center justify-center text-white font-display text-xl shadow-lg">11</div>
+      <div class="text-white">
+        <div class="font-bold text-sm leading-none">11° GB</div>
+        <div class="text-xs text-gray-400">PMESP</div>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-7 text-sm text-gray-300">
+      <a href="#sobre"     class="nav-link hover:text-white">Sobre</a>
+      <a href="#percurso"  class="nav-link hover:text-white">Percurso</a>
+      <a href="#programa"  class="nav-link hover:text-white">Programa</a>
+      <a href="#kit"       class="nav-link hover:text-white">Kit</a>
+      <a href="#faq"       class="nav-link hover:text-white">Dúvidas</a>
+    </div>
+    <a href="#inscricao" class="btn-fire text-white px-5 py-2 rounded-full text-sm font-semibold">
+      <span>Inscreva-se</span>
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero-bg min-h-screen relative flex items-center pt-20 pb-12">
+  <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-6 w-full relative z-10">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+
+      <!-- Hero text -->
+      <div>
+        <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full text-xs font-semibold text-white mb-6 pulse-badge">
+          <span class="w-2 h-2 rounded-full bg-green-400"></span>
+          INSCRIÇÕES ABERTAS
+        </div>
+
+        <h1 class="font-display text-7xl md:text-8xl lg:text-9xl text-white leading-none mb-4">
+          CORRIDA DO<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-bombeiro-500 to-orange-400">11° GB</span>
+        </h1>
+
+        <p class="text-xl md:text-2xl text-gray-200 font-light mb-8 max-w-lg">
+          Corra com quem corre por você. Uma prova oficial do Corpo de Bombeiros pelas ruas do Vale do Paraíba.
+        </p>
+
+        <div class="flex flex-wrap gap-3 mb-10">
+          <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-2 rounded-lg text-white">
+            <div class="text-xs text-gray-400 uppercase tracking-wider">Data</div>
+            <div class="font-bold">28 Jun 2026</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-2 rounded-lg text-white">
+            <div class="text-xs text-gray-400 uppercase tracking-wider">Largada</div>
+            <div class="font-bold">07h00</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur border border-white/20 px-4 py-2 rounded-lg text-white">
+            <div class="text-xs text-gray-400 uppercase tracking-wider">Local</div>
+            <div class="font-bold">Taubaté/SP</div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+          <a href="#inscricao" class="btn-fire text-white px-8 py-4 rounded-full font-bold text-lg glow">
+            <span>QUERO ME INSCREVER</span>
+          </a>
+          <a href="#sobre" class="px-8 py-4 rounded-full font-semibold text-white border border-white/30 hover:bg-white/10 transition">
+            Saiba mais
+          </a>
+        </div>
+      </div>
+
+      <!-- Countdown -->
+      <div class="bg-black/40 backdrop-blur rounded-3xl border border-white/10 p-8">
+        <div class="text-center mb-6">
+          <div class="text-bombeiro-500 text-sm font-bold uppercase tracking-widest mb-2">Contagem regressiva</div>
+          <div class="text-white text-2xl font-light">Não fique de fora</div>
+        </div>
+
+        <div id="countdown" class="grid grid-cols-4 gap-3 mb-8">
+          <div class="text-center bg-white/5 rounded-xl p-4">
+            <div id="cd-dias" class="countdown-num text-5xl md:text-6xl leading-none">—</div>
+            <div class="text-gray-400 text-xs mt-1 uppercase tracking-wider">Dias</div>
+          </div>
+          <div class="text-center bg-white/5 rounded-xl p-4">
+            <div id="cd-horas" class="countdown-num text-5xl md:text-6xl leading-none">—</div>
+            <div class="text-gray-400 text-xs mt-1 uppercase tracking-wider">Horas</div>
+          </div>
+          <div class="text-center bg-white/5 rounded-xl p-4">
+            <div id="cd-min" class="countdown-num text-5xl md:text-6xl leading-none">—</div>
+            <div class="text-gray-400 text-xs mt-1 uppercase tracking-wider">Min</div>
+          </div>
+          <div class="text-center bg-white/5 rounded-xl p-4">
+            <div id="cd-seg" class="countdown-num text-5xl md:text-6xl leading-none">—</div>
+            <div class="text-gray-400 text-xs mt-1 uppercase tracking-wider">Seg</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-bombeiro-500/20 border border-bombeiro-500/30 rounded-xl py-3">
+            <div class="text-white font-bold text-2xl">5K</div>
+            <div class="text-gray-400 text-xs">Caminhada</div>
+          </div>
+          <div class="bg-bombeiro-500/20 border border-bombeiro-500/30 rounded-xl py-3">
+            <div class="text-white font-bold text-2xl">10K</div>
+            <div class="text-gray-400 text-xs">Corrida</div>
+          </div>
+          <div class="bg-bombeiro-500/20 border border-bombeiro-500/30 rounded-xl py-3">
+            <div class="text-white font-bold text-2xl">21K</div>
+            <div class="text-gray-400 text-xs">Meia Maratona</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 text-xs animate-bounce">▼</div>
+</section>
+
+<!-- SOBRE -->
+<section id="sobre" class="py-24 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3">Sobre o evento</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">Corra pela vida.<br>Corra com os Bombeiros.</h2>
+      <div class="section-divider mx-auto w-32 my-6"></div>
+      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+        A Corrida do 11° GB chega à sua edição com um propósito claro: aproximar a comunidade dos profissionais que cuidam dela.
+        Parte da arrecadação será destinada à manutenção da Estação 2 e à compra de equipamentos.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="card-hover bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="w-14 h-14 bg-bombeiro-500/10 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-7 h-7 text-bombeiro-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-2">Cronometragem oficial</h3>
+        <p class="text-gray-600">Com chip eletrônico e classificação geral, por categoria, sexo e faixa etária.</p>
+      </div>
+
+      <div class="card-hover bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="w-14 h-14 bg-bombeiro-500/10 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-7 h-7 text-bombeiro-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 5.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-2">Segurança total</h3>
+        <p class="text-gray-600">Equipes do 11°GB ao longo de todo o percurso, ambulâncias e pontos de hidratação.</p>
+      </div>
+
+      <div class="card-hover bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="w-14 h-14 bg-bombeiro-500/10 rounded-xl flex items-center justify-center mb-5">
+          <svg class="w-7 h-7 text-bombeiro-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <h3 class="font-bold text-xl mb-2">Premiação especial</h3>
+        <p class="text-gray-600">Troféus para os 5 primeiros de cada categoria e medalha de participação para todos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERCURSO -->
+<section id="percurso" class="py-24 bg-white">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3">Percurso e categorias</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">Escolha sua distância</h2>
+      <div class="section-divider mx-auto w-32 my-6"></div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- 5K -->
+      <div class="card-hover relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white p-8 shadow-xl">
+        <div class="absolute -right-6 -top-6 text-9xl font-display opacity-10">5K</div>
+        <div class="relative">
+          <div class="text-emerald-200 text-sm font-semibold uppercase tracking-wider mb-2">Caminhada · Família</div>
+          <div class="font-display text-6xl mb-4">5 KM</div>
+          <ul class="space-y-2 text-sm mb-6">
+            <li class="flex items-center gap-2">✓ Aberto a partir de 12 anos</li>
+            <li class="flex items-center gap-2">✓ Percurso plano e seguro</li>
+            <li class="flex items-center gap-2">✓ Ideal para iniciantes</li>
+          </ul>
+          <div class="text-3xl font-bold">R$ 60</div>
+          <div class="text-emerald-200 text-xs">com kit completo</div>
+        </div>
+      </div>
+
+      <!-- 10K -->
+      <div class="card-hover relative overflow-hidden rounded-3xl bg-gradient-to-br from-bombeiro-500 to-bombeiro-700 text-white p-8 shadow-xl transform md:scale-105 ring-2 ring-bombeiro-500/50">
+        <div class="absolute -right-6 -top-6 text-9xl font-display opacity-10">10K</div>
+        <div class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold">MAIS POPULAR</div>
+        <div class="relative">
+          <div class="text-red-200 text-sm font-semibold uppercase tracking-wider mb-2">Corrida · Intermediário</div>
+          <div class="font-display text-6xl mb-4">10 KM</div>
+          <ul class="space-y-2 text-sm mb-6">
+            <li class="flex items-center gap-2">✓ A partir de 16 anos</li>
+            <li class="flex items-center gap-2">✓ Premiação por categoria</li>
+            <li class="flex items-center gap-2">✓ Cronometragem eletrônica</li>
+          </ul>
+          <div class="text-3xl font-bold">R$ 90</div>
+          <div class="text-red-200 text-xs">com kit completo</div>
+        </div>
+      </div>
+
+      <!-- 21K -->
+      <div class="card-hover relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-700 to-purple-900 text-white p-8 shadow-xl">
+        <div class="absolute -right-6 -top-6 text-9xl font-display opacity-10">21K</div>
+        <div class="relative">
+          <div class="text-purple-200 text-sm font-semibold uppercase tracking-wider mb-2">Meia Maratona · Avançado</div>
+          <div class="font-display text-6xl mb-4">21 KM</div>
+          <ul class="space-y-2 text-sm mb-6">
+            <li class="flex items-center gap-2">✓ A partir de 18 anos</li>
+            <li class="flex items-center gap-2">✓ Atestado médico obrigatório</li>
+            <li class="flex items-center gap-2">✓ Premiação ampliada</li>
+          </ul>
+          <div class="text-3xl font-bold">R$ 120</div>
+          <div class="text-purple-200 text-xs">com kit completo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMA -->
+<section id="programa" class="py-24 bg-gray-900 text-white">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3">Programação</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">Como vai ser o dia</h2>
+      <div class="section-divider mx-auto w-32 my-6"></div>
+    </div>
+
+    <div class="space-y-4">
+      <div class="flex items-start gap-6 bg-white/5 backdrop-blur p-6 rounded-2xl border border-white/10">
+        <div class="font-display text-4xl text-bombeiro-500 w-24 flex-shrink-0">05:30</div>
+        <div>
+          <h3 class="font-bold text-lg">Abertura da arena</h3>
+          <p class="text-gray-400">Retirada de chips, guarda-volumes, alongamento dirigido.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-6 bg-white/5 backdrop-blur p-6 rounded-2xl border border-white/10">
+        <div class="font-display text-4xl text-bombeiro-500 w-24 flex-shrink-0">06:30</div>
+        <div>
+          <h3 class="font-bold text-lg">Cerimônia de abertura</h3>
+          <p class="text-gray-400">Hino Nacional, formação dos atletas e palavras do Comando do 11°GB.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-6 bg-white/5 backdrop-blur p-6 rounded-2xl border border-white/10">
+        <div class="font-display text-4xl text-bombeiro-500 w-24 flex-shrink-0">07:00</div>
+        <div>
+          <h3 class="font-bold text-lg">Largada — 21K, 10K e 5K</h3>
+          <p class="text-gray-400">Largada simultânea separada por baia de partida.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-6 bg-white/5 backdrop-blur p-6 rounded-2xl border border-white/10">
+        <div class="font-display text-4xl text-bombeiro-500 w-24 flex-shrink-0">09:30</div>
+        <div>
+          <h3 class="font-bold text-lg">Premiação</h3>
+          <p class="text-gray-400">Entrega de troféus aos 5 primeiros de cada categoria.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-6 bg-white/5 backdrop-blur p-6 rounded-2xl border border-white/10">
+        <div class="font-display text-4xl text-bombeiro-500 w-24 flex-shrink-0">10:30</div>
+        <div>
+          <h3 class="font-bold text-lg">Encerramento</h3>
+          <p class="text-gray-400">Última hidratação, sorteios entre participantes e foto coletiva.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KIT -->
+<section id="kit" class="py-24 bg-gray-50">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3">Kit do atleta</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">O que você leva</h2>
+      <div class="section-divider mx-auto w-32 my-6"></div>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="bg-white p-6 rounded-2xl text-center shadow-sm card-hover">
+        <div class="text-5xl mb-3">👕</div>
+        <h3 class="font-bold mb-1">Camiseta oficial</h3>
+        <p class="text-gray-500 text-sm">Dry-fit personalizada com a arte do evento.</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl text-center shadow-sm card-hover">
+        <div class="text-5xl mb-3">🎽</div>
+        <h3 class="font-bold mb-1">Número de peito</h3>
+        <p class="text-gray-500 text-sm">Com chip de cronometragem integrado.</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl text-center shadow-sm card-hover">
+        <div class="text-5xl mb-3">🏅</div>
+        <h3 class="font-bold mb-1">Medalha</h3>
+        <p class="text-gray-500 text-sm">Entregue na chegada para todos os concluintes.</p>
+      </div>
+      <div class="bg-white p-6 rounded-2xl text-center shadow-sm card-hover">
+        <div class="text-5xl mb-3">🎒</div>
+        <h3 class="font-bold mb-1">Sacochila</h3>
+        <p class="text-gray-500 text-sm">Com brindes dos patrocinadores.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSCRIÇÃO -->
+<section id="inscricao" class="py-24 bg-gradient-to-br from-bombeiro-900 via-bombeiro-700 to-black text-white relative overflow-hidden">
+  <div class="absolute inset-0 opacity-5">
+    <div class="absolute top-10 left-10 font-display text-[20rem] leading-none">11</div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-6 relative z-10">
+    <div class="text-center mb-12">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3 bg-white/10 inline-block px-4 py-1 rounded-full">Inscreva-se agora</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">Bora correr?</h2>
+      <p class="text-gray-300 text-lg">Preencha o formulário e garanta sua vaga. Vagas limitadas.</p>
+    </div>
+
+    <form id="inscForm" onsubmit="enviarInscricao(event)" class="bg-white/95 backdrop-blur text-gray-900 rounded-3xl p-8 md:p-10 shadow-2xl space-y-5">
+
+      <div class="grid md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-semibold mb-2">Nome completo *</label>
+          <input required type="text" name="nome" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 focus:border-bombeiro-500 outline-none transition" placeholder="Seu nome">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-2">CPF *</label>
+          <input required type="text" name="cpf" maxlength="14" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 focus:border-bombeiro-500 outline-none transition" placeholder="000.000.000-00">
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-semibold mb-2">E-mail *</label>
+          <input required type="email" name="email" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 focus:border-bombeiro-500 outline-none transition" placeholder="voce@exemplo.com">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-2">Telefone *</label>
+          <input required type="tel" name="telefone" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 focus:border-bombeiro-500 outline-none transition" placeholder="(12) 99999-9999">
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        <div>
+          <label class="block text-sm font-semibold mb-2">Data nascimento *</label>
+          <input required type="date" name="nasc" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 outline-none transition">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-2">Sexo *</label>
+          <select required name="sexo" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 outline-none transition">
+            <option value="">Selecione</option>
+            <option>Masculino</option>
+            <option>Feminino</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-2">Tamanho da camiseta *</label>
+          <select required name="camiseta" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-bombeiro-500 outline-none transition">
+            <option value="">Selecione</option>
+            <option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-2">Categoria *</label>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="cursor-pointer">
+            <input type="radio" name="categoria" value="5K" required class="peer sr-only">
+            <div class="border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition">
+              <div class="font-display text-3xl">5K</div>
+              <div class="text-xs text-gray-500">Caminhada · R$ 60</div>
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="categoria" value="10K" class="peer sr-only">
+            <div class="border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-bombeiro-500 peer-checked:bg-red-50 transition">
+              <div class="font-display text-3xl">10K</div>
+              <div class="text-xs text-gray-500">Corrida · R$ 90</div>
+            </div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="categoria" value="21K" class="peer sr-only">
+            <div class="border-2 border-gray-200 rounded-xl p-4 text-center peer-checked:border-purple-500 peer-checked:bg-purple-50 transition">
+              <div class="font-display text-3xl">21K</div>
+              <div class="text-xs text-gray-500">Meia maratona · R$ 120</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="flex items-start gap-3 cursor-pointer text-sm text-gray-600">
+          <input type="checkbox" required class="mt-1 accent-bombeiro-500">
+          <span>Li e aceito o <a class="text-bombeiro-500 font-semibold hover:underline" href="#">regulamento</a> da prova e declaro estar apto fisicamente para a categoria escolhida.</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-fire w-full text-white py-4 rounded-xl font-bold text-lg glow">
+        <span>CONFIRMAR INSCRIÇÃO</span>
+      </button>
+
+      <div id="formMsg" class="hidden text-center py-4 rounded-xl"></div>
+    </form>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-24 bg-white">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="text-center mb-12">
+      <div class="text-bombeiro-500 font-bold uppercase tracking-widest text-sm mb-3">Dúvidas frequentes</div>
+      <h2 class="font-display text-5xl md:text-6xl mb-4">Perguntas comuns</h2>
+      <div class="section-divider mx-auto w-32 my-6"></div>
+    </div>
+
+    <div class="space-y-3">
+      <details class="group bg-gray-50 rounded-xl">
+        <summary class="cursor-pointer list-none px-5 py-4 flex justify-between items-center font-semibold">
+          Onde será a retirada do kit?
+          <span class="text-bombeiro-500 group-open:rotate-45 transition">+</span>
+        </summary>
+        <div class="px-5 pb-4 text-gray-600">Na sede do 11°GB em Taubaté, nos dois dias que antecedem a prova, das 10h às 20h.</div>
+      </details>
+      <details class="group bg-gray-50 rounded-xl">
+        <summary class="cursor-pointer list-none px-5 py-4 flex justify-between items-center font-semibold">
+          Crianças podem participar?
+          <span class="text-bombeiro-500 group-open:rotate-45 transition">+</span>
+        </summary>
+        <div class="px-5 pb-4 text-gray-600">A prova é a partir de 12 anos para o percurso de 5K, com autorização dos responsáveis. As demais categorias têm idades mínimas próprias.</div>
+      </details>
+      <details class="group bg-gray-50 rounded-xl">
+        <summary class="cursor-pointer list-none px-5 py-4 flex justify-between items-center font-semibold">
+          Tem estacionamento no local?
+          <span class="text-bombeiro-500 group-open:rotate-45 transition">+</span>
+        </summary>
+        <div class="px-5 pb-4 text-gray-600">Sim, gratuito mediante apresentação do número de peito do atleta. Espaço limitado.</div>
+      </details>
+      <details class="group bg-gray-50 rounded-xl">
+        <summary class="cursor-pointer list-none px-5 py-4 flex justify-between items-center font-semibold">
+          Posso correr de carrinho de bebê ou cachorro?
+          <span class="text-bombeiro-500 group-open:rotate-45 transition">+</span>
+        </summary>
+        <div class="px-5 pb-4 text-gray-600">Apenas na categoria 5K (Caminhada/Família) e em baia separada, ao final do pelotão.</div>
+      </details>
+      <details class="group bg-gray-50 rounded-xl">
+        <summary class="cursor-pointer list-none px-5 py-4 flex justify-between items-center font-semibold">
+          O atestado médico é obrigatório?
+          <span class="text-bombeiro-500 group-open:rotate-45 transition">+</span>
+        </summary>
+        <div class="px-5 pb-4 text-gray-600">Obrigatório para o 21K. Recomendado para 5K e 10K. Pode ser enviado até 5 dias antes da prova.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-black text-gray-400 py-12">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-3 gap-8 mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-bombeiro-500 to-bombeiro-700 flex items-center justify-center text-white font-display text-2xl">11</div>
+          <div class="text-white font-bold">11° Grupamento de Bombeiros</div>
+        </div>
+        <p class="text-sm">Polícia Militar do Estado de São Paulo</p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Contato</h4>
+        <p class="text-sm">📧 corrida@exemplo.com.br</p>
+        <p class="text-sm">📞 (12) 0000-0000</p>
+      </div>
+      <div>
+        <h4 class="text-white font-semibold mb-3">Redes sociais</h4>
+        <div class="flex gap-3">
+          <a href="#" class="w-10 h-10 rounded-full bg-white/10 hover:bg-bombeiro-500 flex items-center justify-center transition">📷</a>
+          <a href="#" class="w-10 h-10 rounded-full bg-white/10 hover:bg-bombeiro-500 flex items-center justify-center transition">📘</a>
+          <a href="#" class="w-10 h-10 rounded-full bg-white/10 hover:bg-bombeiro-500 flex items-center justify-center transition">🎥</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-6 text-center text-xs">
+      © 2026 — 11° GB PMESP. Todos os direitos reservados.
+    </div>
+  </div>
+</footer>
+
+<script>
+// Countdown
+const TARGET = new Date('2026-06-28T07:00:00').getTime();
+function tick() {
+  const diff = TARGET - Date.now();
+  if (diff < 0) return;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-dias').textContent  = String(d).padStart(2,'0');
+  document.getElementById('cd-horas').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-min').textContent   = String(m).padStart(2,'0');
+  document.getElementById('cd-seg').textContent   = String(s).padStart(2,'0');
+}
+tick();
+setInterval(tick, 1000);
+
+// Form submit (placeholder)
+function enviarInscricao(e) {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  msg.className = 'text-center py-4 rounded-xl bg-emerald-50 text-emerald-700 font-semibold';
+  msg.textContent = '✓ Inscrição enviada! Verifique seu e-mail para confirmação e pagamento.';
+  msg.classList.remove('hidden');
+  e.target.reset();
+  msg.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// CPF mask
+document.querySelector('input[name="cpf"]').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1-$2');
+  e.target.value = v;
+});
+// Phone mask
+document.querySelector('input[name="telefone"]').addEventListener('input', e => {
+  let v = e.target.value.replace(/\D/g, '').slice(0,11);
+  v = v.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+  e.target.value = v;
+});
+</script>
+
+</body>
+</html>

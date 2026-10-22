@@ -1,0 +1,98 @@
+# ============================================================
+# Evolution API — WhatsApp real (Baileys) para a B.I.A.
+#
+# ATENÇÃO: as credenciais saíram deste arquivo (ele é versionado) e agora vêm do
+# .env da RAIZ do projeto. Como o compose está em n8n/, é obrigatório apontar o
+# arquivo de ambiente — sem isso, o compose falha dizendo qual variável falta,
+# em vez de subir com um segredo escrito aqui dentro:
+#
+#   docker compose --env-file ../.env -f docker-compose-evolution.yml up -d
+#
+# Subir:      docker compose --env-file ../.env -f docker-compose-evolution.yml up -d
+# Logs:       docker compose -f docker-compose-evolution.yml logs -f evolution
+# Parar:      docker compose -f docker-compose-evolution.yml down
+# UI Manager: http://localhost:8080/manager
+# ============================================================
+
+services:
+  evolution:
+    image: evoapicloud/evolution-api:2.4.0-rc2
+    container_name: evolution_11gb
+    restart: unless-stopped
+
+    # Sem `dns:` fixo: os containers usam o resolvedor do Docker, que segue o
+    # DNS do host. Fixar resolvedores públicos quebra em redes que bloqueiam a
+    # porta 53 para fora.
+    ports:
+      # Só no loopback: com 0.0.0.0 a porta ficaria aberta para a rede local.
+      # Os outros containers chegam via host.docker.internal.
+      - "127.0.0.1:8080:8080"
+    environment:
+      - SERVER_URL=http://localhost:8080
+
+      # --- Auth API ---
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY:?defina EVOLUTION_API_KEY no .env}
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+
+      # --- Idioma / config sessão ---
+      - LANGUAGE=pt-BR
+      - CONFIG_SESSION_PHONE_CLIENT=BIA-11GB
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+
+      # --- QR Code ---
+      - QRCODE_LIMIT=30
+      - QRCODE_COLOR=#175197
+
+      # --- Database (reusa o postgres_11gb existente) ---
+      # Conecta pelo NOME DO CONTAINER na rede rede_11gb, não por
+      # host.docker.internal: depois de um "wsl --shutdown" ele pode resolver
+      # só para IPv6 e o Prisma entra em crash loop com P1001. Pela rede
+      # interna do Docker o nome "postgres" resolve sempre.
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://${PG_USER:-admin}:${PG_PASS:?defina PG_PASS no .env}@postgres:5432/evolution_api
+      # Adicionado pra imagem 2.4.0+ (Prisma migrate exige DATABASE_URL)
+      - DATABASE_URL=postgresql://${PG_USER:-admin}:${PG_PASS:?defina PG_PASS no .env}@postgres:5432/evolution_api
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_11gb
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - DATABASE_SAVE_DATA_LABELS=false
+      - DATABASE_SAVE_DATA_HISTORIC=false
+
+      # --- Cache (usa local; sem Redis pra manter simples) ---
+      - CACHE_REDIS_ENABLED=false
+      - CACHE_LOCAL_ENABLED=true
+
+      # --- Webhook global desligado (cada instância configura o seu) ---
+      - WEBHOOK_GLOBAL_ENABLED=false
+      - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
+
+      # --- Logs ---
+      - LOG_LEVEL=ERROR
+      - LOG_COLOR=true
+
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+
+    # O webhook da instância chama o n8n por host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - rede_11gb       # onde vive o postgres_11gb (alias "postgres")
+      - default         # rede própria deste compose
+
+networks:
+  rede_11gb:
+    # Criada por outro compose; aqui só referenciamos.
+    external: true
+
+volumes:
+  evolution_instances:
+    name: evolution_11gb_instances
+  evolution_store:
+    name: evolution_11gb_store

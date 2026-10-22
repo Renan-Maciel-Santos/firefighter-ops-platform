@@ -1,0 +1,9 @@
+# Variante do Qwen3 4B com contexto suficiente pra B.I.A.
+#
+# O prompt de sistema + os schemas das 20 tools somam ~4.615 tokens.
+# O padrão do Ollama (4.096) rejeita a requisição antes de processar.
+# 8.192 cobre o prompt fixo + a janela de 10 mensagens da memória do n8n.
+FROM qwen3:4b-instruct
+
+PARAMETER num_ctx 8192
+PARAMETER temperature 0.2

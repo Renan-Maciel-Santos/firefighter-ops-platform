@@ -1,0 +1,12 @@
+# Coletores e ETLs (rodam no Windows da unidade, com acesso à intranet).
+# Não são necessários para subir a demonstração.
+-r requirements.txt
+playwright
+pandas
+openpyxl
+xlrd
+gspread
+google-auth
+requests
+python-pptx
+cryptography

@@ -1,0 +1,103 @@
+# ============================================================
+# n8n da B.I.A. (orquestra o agente do WhatsApp) — referência
+# ------------------------------------------------------------
+# Subir:   docker compose --env-file ../.env -f docker-compose.yml up -d
+# Logs:    docker compose --env-file ../.env -f docker-compose.yml logs -f n8n
+# Parar:   docker compose --env-file ../.env -f docker-compose.yml down
+# Acesso:  http://localhost:5679
+#
+# O .env fica na RAIZ do projeto e este arquivo está em n8n/, então o
+# --env-file é obrigatório — mesma regra do docker-compose-evolution.yml.
+#
+# `name:` explícito e diferente do outro compose desta pasta. Sem ele os
+# dois arquivos cairiam no mesmo projeto (chamado "n8n", herdado do nome
+# do diretório) e um `up` daqui trataria o evolution_11gb como órfão.
+#
+# Database e role próprios no Postgres, criados por
+# ../db/provisioning/001_n8n_database.sql.
+# ============================================================
+
+name: bia-n8n
+
+services:
+  n8n:
+    # Versão pinada: import de workflow entre versões diferentes esbarra
+    # em diferença de schema.
+    image: n8nio/n8n:2.16.0
+    container_name: n8n_11gb
+    restart: unless-stopped
+
+    # Sem `dns:` fixo: os containers usam o resolvedor do Docker, que segue o
+    # DNS do host. Fixar resolvedores públicos quebra em redes que bloqueiam a
+    # porta 53 para fora.
+
+    ports:
+      # Só no loopback: com 0.0.0.0 a porta ficaria aberta para a rede local.
+      # Os outros containers chegam pela rede do Docker.
+      - "127.0.0.1:5679:5678"
+
+    environment:
+      # ---------------- Banco: database e role dedicados --------------
+      # "postgres" é o alias do Postgres na rede rede_11gb. Pelo nome de
+      # rede, e não por host.docker.internal: depois de um "wsl --shutdown"
+      # o host.docker.internal pode resolver só para IPv6 e derrubar a
+      # conexão. Pela rede interna o nome resolve sempre.
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${N8N_PG_DB:?defina N8N_PG_DB no .env}
+      - DB_POSTGRESDB_USER=${N8N_PG_USER:?defina N8N_PG_USER no .env}
+      - DB_POSTGRESDB_PASSWORD=${N8N_PG_PASS:?defina N8N_PG_PASS no .env}
+
+      # ---------------- Chave de cifra das credenciais ----------------
+      # Sem esta variável o n8n autogera uma chave e a grava no volume
+      # (/home/node/.n8n/config): o container deixa de ser reproduzível e
+      # perder o volume significa perder todas as credenciais salvas.
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?defina N8N_ENCRYPTION_KEY no .env}
+
+      # ---------------- Rede / identidade -----------------------------
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      # URL que a Evolution usa para chamar o webhook (pela rede_11gb).
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:?defina N8N_WEBHOOK_URL no .env}
+
+      # ---------------- Fuso ------------------------------------------
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - TZ=America/Sao_Paulo
+
+      # NÃO reintroduzir N8N_RUNNERS_ENABLED: no 2.16.0 os task runners já
+      # são padrão e a variável virou deprecada.
+      #
+      # "Failed to start Python task runner ... Python 3 is missing" nos
+      # logs é esperado: o único nó Code do workflow é JavaScript.
+
+      # NÃO usar N8N_BASIC_AUTH_*: são inoperantes desde o n8n v1. A
+      # autenticação é a conta de owner gravada no database.
+
+    volumes:
+      - n8n_bia_data:/home/node/.n8n
+      # Exports dos workflows, somente leitura, para `n8n import:workflow`.
+      - ./workflows:/workflows:ro
+
+    extra_hosts:
+      # Os nós HTTP do workflow chamam o webapp e a Evolution por
+      # host.docker.internal.
+      - "host.docker.internal:host-gateway"
+
+    # Sem depends_on: o Postgres pertence a outro compose, e depends_on só
+    # alcança serviços do mesmo projeto. O `restart: unless-stopped` cobre
+    # o caso de o banco ainda não estar de pé.
+
+    networks:
+      - rede_11gb
+
+networks:
+  rede_11gb:
+    # Criada pelo compose do Postgres; aqui só referenciamos.
+    external: true
+
+volumes:
+  n8n_bia_data:
+    # `name:` explícito para o volume não herdar o prefixo do projeto.
+    name: n8n_bia_data

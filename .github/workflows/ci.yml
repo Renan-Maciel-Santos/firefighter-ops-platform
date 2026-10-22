@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-e-unitarios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependências
+        run: pip install -r requirements.txt pytest ruff
+      - name: Ruff (erros reais, não estilo)
+        run: ruff check .
+      - name: Testes unitários
+        run: pytest -m unit
+
+  integracao:
+    runs-on: ubuntu-latest
+    needs: lint-e-unitarios
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: .env de CI (segredos gerados na hora)
+        run: |
+          cp .env.example .env
+          sed -i "s/^PG_PASS=.*/PG_PASS=$(openssl rand -hex 16)/" .env
+          sed -i "s/^JWT_SECRET_KEY=.*/JWT_SECRET_KEY=$(openssl rand -hex 32)/" .env
+          sed -i "s/^N8N_TOKEN=.*/N8N_TOKEN=$(openssl rand -hex 16)/" .env
+      - name: Sobe Postgres + webapp
+        run: docker compose up -d --build
+      - name: Espera o webapp
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8800/health && exit 0
+            sleep 2
+          done
+          docker compose logs webapp
+          exit 1
+      - name: Seed com dados fictícios
+        run: docker compose exec -T webapp python ../seed/gerar_dados_ficticios.py --recriar
+      - name: Testes de integração
+        run: |
+          pip install -r requirements.txt pytest
+          pytest -m integration
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose logs

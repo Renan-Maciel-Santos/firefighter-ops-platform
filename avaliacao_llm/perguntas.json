@@ -1,0 +1,58 @@
+[
+  {"id": 1,  "grupo": "operacional", "pergunta": "Quantas viaturas operando hoje?", "tool": "resumo_operacional"},
+  {"id": 2,  "grupo": "operacional", "pergunta": "Como está o mapa de força agora?", "tool": "resumo_operacional"},
+  {"id": 3,  "grupo": "operacional", "pergunta": "Quantos mergulhadores temos de serviço?", "tool": "resumo_operacional"},
+
+  {"id": 4,  "grupo": "guarnicao", "pergunta": "Quem é o Cmt do AB de Taubaté?", "tool": "consultar_guarnicao", "params": {"municipio": "Taubaté"}},
+  {"id": 5,  "grupo": "guarnicao", "pergunta": "Me passa a guarnição da estação Bom Conselho", "tool": "consultar_guarnicao", "params": {"estacao": "Bom Conselho"}},
+  {"id": 6,  "grupo": "guarnicao", "pergunta": "Qual o telefone da UR de São Sebastião?", "tool": "consultar_guarnicao", "params": {"municipio": "São Sebastião"}},
+
+  {"id": 7,  "grupo": "militar", "pergunta": "Quem é o RE 900044?", "tool": "buscar_militar"},
+  {"id": 8,  "grupo": "militar", "pergunta": "Acha o militar Caio Ventura pra mim", "tool": "buscar_militar"},
+
+  {"id": 9,  "grupo": "ias_individual", "pergunta": "IAS do 900044", "tool": "consultar_ias", "params": {"re": "900044"}},
+  {"id": 10, "grupo": "ias_individual", "pergunta": "A IAS do RE 123456 está em dia?", "tool": "consultar_ias", "params": {"re": "123456"}},
+
+  {"id": 11, "grupo": "ias_agregado", "pergunta": "Onde está concentrado o problema de IAS?", "tool": "consultar_ias_por_sgb"},
+  {"id": 12, "grupo": "ias_agregado", "pergunta": "Quais SGBs têm mais IAS vencida?", "tool": "consultar_ias_por_sgb"},
+  {"id": 13, "grupo": "ias_agregado", "pergunta": "Me mostra a IAS por unidade", "tool": "consultar_ias_por_sgb"},
+
+  {"id": 14, "grupo": "ias_lista", "pergunta": "Quem está com IAS vencida? Passa os nomes", "tool": "listar_com_ias_atrasada"},
+  {"id": 15, "grupo": "ias_lista", "pergunta": "Quem eu preciso mandar refazer a IAS?", "tool": "listar_com_ias_atrasada"},
+  {"id": 16, "grupo": "ias_lista", "pergunta": "Lista os militares sem IAS do 2º SGB", "tool": "listar_com_ias_atrasada", "params": {"lotacao": "2º SGB"}},
+
+  {"id": 17, "grupo": "restricao_individual", "pergunta": "O RE 900044 tem alguma restrição?", "tool": "consultar_restricoes", "params": {"re": "900044"}},
+
+  {"id": 18, "grupo": "restricao_lista", "pergunta": "Quem está de restrição hoje?", "tool": "listar_com_restricao"},
+  {"id": 19, "grupo": "restricao_lista", "pergunta": "Vou montar a escala, quem não pode operar?", "tool": "listar_com_restricao"},
+  {"id": 20, "grupo": "restricao_lista", "pergunta": "Me lista os afastados", "tool": "listar_com_restricao"},
+
+  {"id": 21, "grupo": "taf", "pergunta": "Qual foi o último TAF do RE 900044?", "tool": "consultar_taf", "params": {"re": "900044"}},
+
+  {"id": 22, "grupo": "dossie", "pergunta": "Me dá o panorama completo do RE 900044", "tool": "dossie_militar", "params": {"re": "900044"}},
+  {"id": 23, "grupo": "dossie", "pergunta": "Quero tudo sobre o militar 123456: dados, IAS, TAF e restrição", "tool": "dossie_militar", "params": {"re": "123456"}},
+
+  {"id": 24, "grupo": "saude_geral", "pergunta": "Como está a saúde do GB?", "tool": "consultar_saude_geral"},
+  {"id": 25, "grupo": "saude_geral", "pergunta": "Quantos militares estão com IAS em dia no total?", "tool": "consultar_saude_geral"},
+
+  {"id": 26, "grupo": "efetivo", "pergunta": "Quantos militares tem em cada SGB?", "tool": "consultar_efetivo_por_lotacao"},
+  {"id": 27, "grupo": "efetivo", "pergunta": "Qual o efetivo do EM?", "tool": "consultar_efetivo_por_lotacao"},
+
+  {"id": 28, "grupo": "efetivo_disponivel", "pergunta": "Quem realmente pode subir viatura hoje?", "tool": "consultar_efetivo_disponivel_por_sgb"},
+  {"id": 29, "grupo": "efetivo_disponivel", "pergunta": "Qual o efetivo real disponível por SGB?", "tool": "consultar_efetivo_disponivel_por_sgb"},
+
+  {"id": 30, "grupo": "motomec", "pergunta": "Quantas viaturas tem a frota toda?", "tool": "consultar_motomec_resumo"},
+  {"id": 31, "grupo": "motomec", "pergunta": "Qual a idade média da frota?", "tool": "consultar_motomec_resumo"},
+  {"id": 32, "grupo": "motomec", "pergunta": "Quais viaturas estão baixadas no 3º SGB?", "tool": "consultar_motomec_baixadas", "params": {"sgb": "3º SGB"}},
+
+  {"id": 33, "grupo": "uge", "pergunta": "Como estão os processos da UGE?", "tool": "consultar_uge_resumo"},
+  {"id": 34, "grupo": "uge", "pergunta": "Tem processo com entrega vencida?", "tool": "consultar_uge_vencidos"},
+  {"id": 35, "grupo": "uge", "pergunta": "Quanto foi empenhado em 2025?", "tool": "consultar_uge_resumo", "params": {"ano": "2025"}},
+
+  {"id": 36, "grupo": "elogios", "pergunta": "Quantos elogios foram publicados esse ano?", "tool": "consultar_elogios_resumo"},
+  {"id": 37, "grupo": "elogios", "pergunta": "Quais láureas o RE 900044 já recebeu?", "tool": "consultar_elogios_militar", "params": {"re": "900044"}},
+  {"id": 38, "grupo": "elogios", "pergunta": "Me mostra os LMP por SGB", "tool": "consultar_elogios_resumo"},
+
+  {"id": 39, "grupo": "sem_tool", "pergunta": "Bom dia", "tool": null},
+  {"id": 40, "grupo": "sem_tool", "pergunta": "Obrigado, era só isso", "tool": null}
+]

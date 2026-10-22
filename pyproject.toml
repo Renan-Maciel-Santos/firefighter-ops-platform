@@ -1,0 +1,22 @@
+[project]
+name = "painel-11gb"
+version = "1.0.0"
+description = "Plataforma de dados de um grupamento de bombeiros: ETLs, Postgres, painel FastAPI e assistente de WhatsApp (versão de demonstração com dados fictícios)."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: regras puras, sem banco nem rede",
+    "integration: precisam da stack no ar (docker compose up + seed)",
+]
+filterwarnings = ["ignore::sqlalchemy.exc.MovedIn20Warning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# Código legado em produção: o CI barra erro de verdade (sintaxe, nome
+# indefinido, import quebrado), não estilo.
+select = ["E9", "F63", "F7", "F82"]
