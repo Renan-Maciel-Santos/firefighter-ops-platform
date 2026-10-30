@@ -1,6 +1,7 @@
 # ADR 0004: Operating without an operations team
 
 - **Status:** Accepted (recorded retroactively)
+- **Date of the decision:** not recorded
 - **Deciders:** Renan Maciel
 
 ## Context

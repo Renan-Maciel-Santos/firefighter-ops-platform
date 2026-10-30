@@ -1,6 +1,7 @@
 # ADR 0002: PostgreSQL as the single source of truth
 
 - **Status:** Accepted (recorded retroactively)
+- **Date of the decision:** not recorded
 - **Deciders:** Renan Maciel
 
 ## Context
@@ -33,4 +34,4 @@ Sources also differ in freshness. Vehicle status, for example, comes both from t
 
 - [`db/demo/schema.sql`](../../db/demo/schema.sql): schemas, views and the freshness trigger
 - [`B3/mapa_operacional.py`](../../B3/mapa_operacional.py): content-hash deduplication
-- [ADR 0005](0005-repository-organised-by-staff-section.md): why the code follows the same sections
+- [ADR 0005](0005-repository-organized-by-staff-section.md): why the code follows the same sections

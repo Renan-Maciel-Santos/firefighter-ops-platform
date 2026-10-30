@@ -1,11 +1,12 @@
-# ADR 0005: Repository organised by staff section
+# ADR 0005: Repository organized by staff section
 
 - **Status:** Accepted (recorded retroactively)
+- **Date of the decision:** not recorded
 - **Deciders:** Renan Maciel
 
 ## Context
 
-The battalion is organised in staff sections, each responsible for its own data and processes:
+The battalion is organized in staff sections, each responsible for its own data and processes:
 
 | Section | Responsibility | Data loaded |
 |---|---|---|
@@ -30,11 +31,11 @@ The people who maintain and use the data speak in these terms: a request comes f
 
 - A change requested by a section is found in one place, named the way the section names it.
 - Sections evolve independently; a new spreadsheet for B/5 does not touch B/1.
-- The structure matches the organisation's own boundaries, in the spirit of bounded contexts in Domain-Driven Design.
+- The structure matches the organization's own boundaries, in the spirit of bounded contexts in Domain-Driven Design.
 
 ### Negative / Trade-offs
 
-- Readers outside the organisation need this ADR, or the README, to understand the folder names.
+- Readers outside the organization need this ADR, or the README, to understand the folder names.
 - Technical layers (collectors, loaders, migrations) are repeated in each section instead of grouped together.
 
 ## References
