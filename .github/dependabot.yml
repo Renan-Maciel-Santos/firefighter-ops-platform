@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # Version updates are made in the production repository first; security alerts remain enabled.
+    open-pull-requests-limit: 0
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
