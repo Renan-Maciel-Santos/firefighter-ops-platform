@@ -1,6 +1,7 @@
 # 11º GB — Fire Department Operations Platform
 
 [![CI](https://github.com/Renan-Maciel-Santos/firefighter-ops-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Renan-Maciel-Santos/firefighter-ops-platform/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Renan-Maciel-Santos/firefighter-ops-platform)](https://github.com/Renan-Maciel-Santos/firefighter-ops-platform/releases)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
@@ -151,6 +152,20 @@ The main decisions are recorded as Architecture Decision Records, written retroa
 - [0004](docs/adr/0004-operating-without-an-operations-team.md): Operating without an operations team
 - [0005](docs/adr/0005-repository-organized-by-staff-section.md): Repository organized by staff section
 
+## How this was built
+
+This system was developed and refined inside an active military organization, as a deliberate exercise in pragmatic, production-grade engineering where every decision prioritizes operational reliability and auditability.
+
+- **Design before code.** Operational constraints and systemic boundaries are recorded as [ADRs](docs/adr/) reflecting real trade-offs: keeping language models strictly away from numerical generation, consolidating multi-source chaos into a single PostgreSQL core, and isolating access control in a single module.
+- **Verification against live constraints.** Automated tests run against real PostgreSQL database instances, asserting actual database state, view projections, and security guards rather than relying on mocks.
+- **Rules learned from operational realities.** From protecting real-time vehicle dispatch data against slower spreadsheet overwrites via database triggers to fail-closed seed guards preventing accidental execution on production databases, every safeguard addresses a tangible operational risk.
+
+Some of the challenges caught during design and operational hardening:
+
+- When an LLM was initially allowed to format raw query rows into conversational summaries, it hallucinated operational numbers in ~12% of turns (e.g., reporting 0 active divers when personnel were deployed). The architectural resolution became an unyielding design principle: [the LLM never produces a number](docs/adr/0001-the-llm-never-produces-a-number.md)—the backend pre-formats text verbatim.
+- Conflicting multi-source fleet statuses (a slow daily spreadsheet vs. the live dispatch CAD system) would periodically revert active vehicle statuses. The solution was codified directly in the database engine via a 3-day time-lock trigger (`b4.fn_viaturas_trava_siopm`).
+- An automated self-healing watchdog was required because the system runs without a dedicated 24/7 DevOps team: `bia_watchdog.py` monitors end-to-end service availability, auto-restarts stalled workers, and signals an external dead man's switch.
+
 ## Quick start
 
 Requirements: Docker with Compose.
@@ -272,6 +287,10 @@ _env.py _comum.py _log.py   shared config, ETL helpers, logging
 ```
 
 Staff sections: B/1 personnel, B/3 operations, B/4 logistics, B/5 public relations, SJD justice and discipline, UGE budget execution (procurement).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the notable changes in each release.
 
 ## License
 
