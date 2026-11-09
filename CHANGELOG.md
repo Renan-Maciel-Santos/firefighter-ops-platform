@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Finance section.** Monthly cost of each sub-command (SGB) from what the municipalities pay per station (phone, water, power, fuel, fleet maintenance, food, other), with a monthly entry form and the procurement unit's own funds by paying source. Replaces a shared Google Sheet.
+- **Per-user permissions.** The admin picks the tabs each staff member sees on a new Permissions tab (`app.usuarios.abas_personalizadas`; NULL keeps the section default). The discipline tab stays restricted to officers and its own section.
+- **Fleet indicators.** Real availability from the CAD snapshots, use vs. age, maintenance and fuel cost per vehicle, incomplete records and a status timeline per vehicle. The fleet tab is split into Indicators and Fleet list.
+- **Divers in the assistant.** `/consulta/resumo-operacional` returns water and divers per station and the divers' names (dive course crossed with the current roster).
+
+
 ## [1.0.0] - 2026-11-04
 
 First release: public, sanitized copy of the production data platform and WhatsApp assistant running for the 11º Grupamento de Bombeiros (CBPMESP), covering ~500 personnel, 25 fire stations and ~190 vehicles with 100% synthetic data.
