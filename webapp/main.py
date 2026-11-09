@@ -6,7 +6,7 @@ import os
 
 from database import engine, Base
 from models import Usuario  # noqa: F401  (registra o modelo no metadata)
-from routers import auth, viaturas, pessoal, ocorrencias, ppmq, saude, taf, mapa_forca, elogios, uge, etl_status, consulta, sjd, usuarios, auditoria_cobom, eap
+from routers import auth, viaturas, pessoal, ocorrencias, ppmq, saude, taf, mapa_forca, elogios, uge, etl_status, consulta, sjd, usuarios, auditoria_cobom, eap, financas
 
 app = FastAPI(title="11º GB — Sistema Interno", version="1.0.0", docs_url="/api/docs")
 
@@ -28,6 +28,7 @@ app.include_router(taf.router)
 app.include_router(mapa_forca.router)
 app.include_router(elogios.router)
 app.include_router(uge.router)
+app.include_router(financas.router)
 app.include_router(etl_status.router)
 app.include_router(consulta.router)
 app.include_router(sjd.router)

@@ -25,7 +25,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import get_db
 from models import Usuario
 from routers.auth import get_current_user, hash_password
-from acesso import PERFIS, SECOES, abas_do_usuario, pode_ver
+from acesso import (PERFIS, SECOES, SECAO_ABAS, ABAS_ATRIBUIVEIS, ABAS_RESTRITAS_A_SECAO,
+                    abas_do_usuario, aba_permitida_ao_praca, pode_ver)
 from eap_documento import POSTOS, nome_proprio
 from sqlalchemy import text
 
@@ -58,6 +59,11 @@ class MudarAtivo(BaseModel):
     ativo: bool
 
 
+class MudarAbas(BaseModel):
+    # None = volta ao padrão da seção.
+    abas: list[str] | None
+
+
 def _saida(u: Usuario) -> dict:
     return {
         "id": u.id,
@@ -67,7 +73,8 @@ def _saida(u: Usuario) -> dict:
         "secao": u.secao,
         # As abas vão junto para o painel mostrar o que a pessoa enxerga sem
         # reimplementar a regra. Quem decide continua sendo o acesso.py.
-        "abas": list(abas_do_usuario(u.perfil.value, u.secao)),
+        "abas": list(abas_do_usuario(u.perfil.value, u.secao, u.abas_personalizadas)),
+        "abas_personalizadas": u.abas_personalizadas,
         "ativo": bool(u.ativo),
         "deve_trocar_senha": bool(u.deve_trocar_senha),
         "apelido_assinatura": u.apelido_assinatura,
@@ -82,6 +89,10 @@ def listar(db: Session = Depends(get_db),
         "eu": atual.id,
         "perfis": list(PERFIS),
         "secoes": list(SECOES),
+        # Para a aba Permissões montar a matriz sem repetir a regra.
+        "abas_atribuiveis": list(ABAS_ATRIBUIVEIS),
+        "abas_restritas_a_secao": ABAS_RESTRITAS_A_SECAO,
+        "padrao_por_secao": {k: list(v) for k, v in SECAO_ABAS.items()},
         "usuarios": [_saida(u) for u in db.query(Usuario).order_by(Usuario.nome).all()],
     }
 
@@ -185,6 +196,29 @@ def resetar(usuario_id: int, db: Session = Depends(get_db),
     u.deve_trocar_senha = True
     db.commit()
     return {"usuario": _saida(u), "senha_provisoria": senha}
+
+
+@router.put("/{usuario_id}/abas")
+def mudar_abas(usuario_id: int, dados: MudarAbas, db: Session = Depends(get_db),
+               atual: Usuario = Depends(get_current_user)):
+    """Abas que um praça vê. Oficial e admin veem tudo — não se ajusta."""
+    exigir_admin(atual)
+    u = db.get(Usuario, usuario_id)
+    if not u:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    if u.perfil.value != "praca":
+        raise HTTPException(status_code=400,
+                            detail="Oficiais e administrador veem todas as abas; só praça tem ajuste.")
+    if dados.abas is None:
+        u.abas_personalizadas = None
+    else:
+        recusadas = [a for a in dados.abas if not aba_permitida_ao_praca(a, u.secao)]
+        if recusadas:
+            raise HTTPException(status_code=400,
+                                detail=f"Aba(s) não permitida(s) para a seção {u.secao}: {', '.join(recusadas)}")
+        u.abas_personalizadas = [a for a in ABAS_ATRIBUIVEIS if a in dados.abas]
+    db.commit()
+    return {"usuario": _saida(u)}
 
 
 @router.patch("/{usuario_id}/ativo")

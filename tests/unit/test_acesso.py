@@ -18,7 +18,26 @@ def test_oficial_ve_tudo_menos_gestao_de_usuarios():
 
 @pytest.mark.parametrize("secao", list(SECAO_ABAS))
 def test_praca_ve_so_a_propria_secao(secao):
-    assert abas_do_usuario("praca", secao) == tuple(SECAO_ABAS[secao])
+    # A ordem segue o menu (ABAS); o que importa é o conjunto.
+    assert set(abas_do_usuario("praca", secao)) == set(SECAO_ABAS[secao])
+
+
+def test_abas_personalizadas_substituem_o_padrao_da_secao():
+    assert abas_do_usuario("praca", "B/4", ["viaturas", "fin_indicadores"]) == ("viaturas", "fin_indicadores")
+    # Lista vazia é "não vê nada", diferente de NULL (= padrão da seção).
+    assert abas_do_usuario("praca", "B/4", []) == ()
+    assert set(abas_do_usuario("praca", "B/4", None)) == set(SECAO_ABAS["B/4"])
+
+
+def test_sjd_so_para_praca_da_secao_sjd():
+    assert "sjd" not in abas_do_usuario("praca", "B/4", ["viaturas", "sjd"])
+    assert "sjd" in abas_do_usuario("praca", "SJD", ["sjd"])
+    assert "sjd" in abas_do_usuario("oficial", None)
+
+
+def test_praca_nunca_ganha_aba_de_admin_nem_aba_inexistente():
+    abas = abas_do_usuario("praca", "B/4", ["usuarios", "permissoes", "aba_que_nao_existe", "viaturas"])
+    assert abas == ("viaturas",)
 
 
 def test_praca_sem_secao_nao_ve_nada():

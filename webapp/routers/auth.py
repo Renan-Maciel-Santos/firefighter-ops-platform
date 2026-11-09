@@ -116,7 +116,8 @@ def get_me(current_user: Usuario = Depends(get_current_user)):
         "secao": current_user.secao,
         # O painel monta o menu com ISTO, e não com uma lista própria em
         # JavaScript. Duas fontes para a mesma decisão divergem em silêncio.
-        "abas": list(abas_do_usuario(current_user.perfil.value, current_user.secao)),
+        "abas": list(abas_do_usuario(current_user.perfil.value, current_user.secao,
+                                     current_user.abas_personalizadas)),
         "deve_trocar_senha": bool(current_user.deve_trocar_senha),
     }
 

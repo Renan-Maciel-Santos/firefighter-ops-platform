@@ -128,8 +128,16 @@
       Viaturas
     </button>
 
-    <!-- UGE -->
-    <div class="px-2 pt-4 pb-1 text-gray-600 text-xs font-bold uppercase tracking-widest">UGE</div>
+    <!-- Finanças (antiga seção UGE) -->
+    <div class="px-2 pt-4 pb-1 text-gray-600 text-xs font-bold uppercase tracking-widest">Finanças</div>
+    <button onclick="showTab('fin_indicadores')" data-tab="fin_indicadores" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg>
+      Custos por SGB
+    </button>
+    <button onclick="showTab('fin_lancamento')" data-tab="fin_lancamento" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Lançamento de gastos
+    </button>
     <button onclick="showTab('uge')" data-tab="uge" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium" data-perfis="comando,administrativo,operacional">
       <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 7h6m-6 4h6m-6 4h4M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z"/></svg>
       Controle de Processos
@@ -140,6 +148,10 @@
     <button onclick="showTab('usuarios')" data-tab="usuarios" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium" data-perfis="comando">
       <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.36-1.86M17 20H7m10 0v-2c0-.66-.13-1.3-.36-1.86m0 0a5 5 0 00-9.28 0M7 20H2v-2a3 3 0 015.36-1.86M7 20v-2c0-.66.13-1.3.36-1.86m0 0a5 5 0 019.28 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       Usuários
+    </button>
+    <button onclick="showTab('permissoes')" data-tab="permissoes" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      Permissões
     </button>
 
     <!-- SAT -->
@@ -233,6 +245,12 @@
 
     <!-- ===== VIATURAS ===== -->
     <div id="tab-viaturas" class="tab-panel">
+      <!-- Duas abas internas: indicadores e a lista da frota -->
+      <div class="flex gap-1 mb-5 border-b border-gray-800">
+        <button data-vtrsec="indicadores" onclick="vtrSecao('indicadores')" class="vtr-sec px-4 py-2 text-sm font-medium border-b-2 -mb-px">Indicadores</button>
+        <button data-vtrsec="lista" onclick="vtrSecao('lista')" class="vtr-sec px-4 py-2 text-sm font-medium border-b-2 -mb-px">Lista da frota</button>
+      </div>
+      <div id="vtrSecIndicadores">
       <!-- Summary cards -->
       <div id="viaturasSummary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="card-stat card rounded-xl p-4"><div class="text-gray-400 text-xs mb-1">Total</div><div id="vTotal" class="text-2xl font-bold text-white">—</div></div>
@@ -251,6 +269,114 @@
         </div>
       </div>
 
+      <!-- ===== COMPLEMENTOS (09/11/2026) ===== -->
+      <!-- Disponibilidade real: das capturas do nível operacional (~30 min) -->
+      <div class="card rounded-xl p-4">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <div class="text-white font-semibold text-sm">Disponibilidade da frota</div>
+            <div id="vtrDispSub" class="text-gray-500 text-xs">Situação de cada viatura nas capturas do nível operacional (~a cada 30 min)</div>
+          </div>
+          <div>
+            <label for="vtrDispDias" class="text-gray-400 text-xs block mb-1">Período</label>
+            <select id="vtrDispDias" onchange="loadVtrDisponibilidade()" class="input-field rounded-lg px-3 py-2 text-sm">
+              <option value="7">Semanal (7 dias)</option>
+              <option value="15">Quinzenal (15 dias)</option>
+              <option value="30" selected>Mensal (30 dias)</option>
+              <option value="60">Bimestral (60 dias)</option>
+              <option value="90">Trimestral (90 dias)</option>
+              <option value="365">Desde o início</option>
+            </select>
+          </div>
+        </div>
+        <div id="vtrDispResumo" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div class="text-gray-400 text-xs mb-2">% da frota baixada, por SGB (média do dia)</div>
+            <div style="height:240px"><canvas id="vtrDispSgbChart"></canvas></div>
+          </div>
+          <div>
+            <div class="text-gray-400 text-xs mb-2">Frota por situação (média do dia)</div>
+            <div style="height:240px"><canvas id="vtrDispFrotaChart"></canvas></div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <div class="text-white font-semibold text-sm mb-1">Viaturas que mais ficaram baixadas no período</div>
+          <div class="text-gray-500 text-xs mb-2">Clique no prefixo para ver a linha do tempo</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead><tr class="text-gray-500 text-left border-b border-gray-800">
+                <th class="py-1.5 pr-3">Prefixo</th><th class="pr-3">SGB</th><th class="pr-3">Tipo</th><th class="pr-3 text-right">Idade</th>
+                <th class="pr-3 w-64">Tempo no período</th><th class="pr-3 text-right">Dias baixada</th><th class="text-right">Vezes que baixou</th>
+              </tr></thead>
+              <tbody id="vtrDispTabela" class="text-gray-300"></tbody>
+            </table>
+          </div>
+          <button id="vtrDispMais" onclick="vtrDispVerTodas=!vtrDispVerTodas; vtrDesenharTabelaDisp()" class="mt-2 text-xs text-gray-400 hover:text-white underline"></button>
+        </div>
+      </div>
+
+      <!-- Uso × idade: atendimentos do tempo-resposta -->
+      <div class="card rounded-xl p-4 mt-6">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <div class="text-white font-semibold text-sm">Uso × idade</div>
+            <div id="vtrUsoSub" class="text-gray-500 text-xs">Atendimentos por viatura (tempo-resposta)</div>
+          </div>
+          <div>
+            <label for="vtrUsoAno" class="text-gray-400 text-xs block mb-1">Ano</label>
+            <select id="vtrUsoAno" onchange="vtrDesenharUso()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-3">
+            <div class="text-gray-400 text-xs mb-2">Cada ponto é uma viatura — idade (anos) × atendimentos no ano</div>
+            <div style="height:280px"><canvas id="vtrUsoChart"></canvas></div>
+          </div>
+          <div class="lg:col-span-2 space-y-4">
+            <div>
+              <div class="text-red-300 text-xs font-semibold mb-1">Rodam muito e já são velhas</div>
+              <div class="text-gray-500 text-[11px] mb-2" id="vtrUsoCritTxt"></div>
+              <div id="vtrUsoCrit" class="space-y-1"></div>
+            </div>
+            <div>
+              <div class="text-gray-300 text-xs font-semibold mb-1">Quase sem atendimento no ano</div>
+              <div class="text-gray-500 text-[11px] mb-2">Até 5 atendimentos, entre os tipos que costumam atender (AB, ABS, UR...) — conferir se estão paradas ou mal lançadas</div>
+              <div id="vtrUsoPouco" class="flex flex-wrap gap-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+        <!-- Custo da frota por SGB (Finanças) -->
+        <div class="card rounded-xl p-4">
+          <div class="flex items-end justify-between gap-3 mb-1">
+            <div class="text-white font-semibold text-sm">Custo da frota por SGB</div>
+            <select id="vtrCustoAno" onchange="loadVtrCusto()" class="input-field rounded-lg px-2 py-1 text-xs"></select>
+          </div>
+          <div class="text-gray-500 text-xs mb-3">Manutenção de frota e combustível pagos pelas prefeituras (Finanças), divididos pelas viaturas de cada SGB</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead><tr class="text-gray-500 text-left border-b border-gray-800">
+                <th class="py-1.5 pr-2">SGB</th><th class="pr-2 text-right">Vtr</th><th class="pr-2 text-right">Manutenção</th>
+                <th class="pr-2 text-right">Combustível</th><th class="pr-2 text-right">Por vtr/mês</th><th class="text-right">Disponível 30d</th>
+              </tr></thead>
+              <tbody id="vtrCustoBody" class="text-gray-300"></tbody>
+            </table>
+          </div>
+          <div class="text-gray-600 text-[11px] mt-2">"Disponível" = operando ou em reserva. Postos com despesa paga por outra via ficam em branco em Finanças e não entram no custo.</div>
+        </div>
+
+        <!-- Cadastro incompleto -->
+        <div class="card rounded-xl p-4">
+          <div class="text-white font-semibold text-sm mb-1">Cadastro incompleto</div>
+          <div id="vtrCadSub" class="text-gray-500 text-xs mb-3">Campos vazios na planilha da B/4</div>
+          <div id="vtrCadLista" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+      </div>
+      <div id="vtrSecLista" class="hidden">
       <!-- Filters -->
       <div class="card rounded-xl p-4 mb-4 flex flex-wrap gap-3 items-end">
         <div>
@@ -287,10 +413,9 @@
               <tr class="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
                 <th class="text-left px-4 py-3">Prefixo</th>
                 <th class="text-left px-4 py-3">SGB</th>
-                <th class="text-left px-4 py-3">PB</th>
-                <th class="text-left px-4 py-3">Estação</th>
+                <th class="text-left px-4 py-3">Onde opera</th>
                 <th class="text-left px-4 py-3">Tipo</th>
-                <th class="text-left px-4 py-3">Ano</th>
+                <th class="text-left px-4 py-3">Ano (idade)</th>
                 <th class="text-left px-4 py-3">Proprietário</th>
                 <th class="text-left px-4 py-3">Status</th>
               </tr>
@@ -306,6 +431,8 @@
             <button id="vNextBtn" onclick="loadViaturas(currentVPage + 1)" class="px-3 py-1 rounded border border-gray-700 hover:border-gray-500 disabled:opacity-30">Próximo</button>
           </div>
         </div>
+      </div>
+
       </div>
     </div>
 
@@ -1317,6 +1444,34 @@
 
     </div>
 
+    <!-- ===== PERMISSÕES — o que cada praça vê ===== -->
+    <div id="tab-permissoes" class="tab-panel">
+      <div class="card rounded-2xl p-6">
+        <div class="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div class="max-w-3xl">
+            <div class="text-white font-bold text-lg">O que cada praça enxerga</div>
+            <div class="text-gray-400 text-sm mt-1">
+              Marque as abas de cada praça. Quem não foi ajustado segue o padrão da seção.
+              Oficiais e o administrador veem tudo e não aparecem aqui.
+              <span class="text-gray-300">Justiça e Disciplina</span> só pode ser dada a praça da seção SJD.
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="permStatus" class="text-xs text-gray-500"></span>
+            <button id="permSalvarBtn" onclick="permSalvar()" disabled
+                    class="bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white font-semibold rounded-lg px-4 py-2.5 text-sm">Salvar alterações</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="text-sm">
+            <thead id="permHead"></thead>
+            <tbody id="permBody" class="divide-y divide-gray-800"></tbody>
+          </table>
+        </div>
+        <div id="permOficiais" class="text-gray-500 text-xs mt-4"></div>
+      </div>
+    </div>
+
     <div id="tab-usuarios" class="tab-panel">
 
       <div class="card rounded-2xl p-6 mb-6">
@@ -1766,6 +1921,123 @@
       </div>
     </div>
 
+    <!-- ===== FINANÇAS — CUSTOS POR SGB (indicadores) ===== -->
+    <div id="tab-fin_indicadores" class="tab-panel">
+      <div class="card rounded-xl p-4 mb-6">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <div class="text-white font-semibold text-sm">Quanto cada SGB custa</div>
+            <div id="finIndSub" class="text-gray-500 text-xs">Gastos das prefeituras lançados pelos SGBs</div>
+          </div>
+          <div class="flex gap-3">
+            <div>
+              <label for="finIndAno" class="text-gray-400 text-xs block mb-1">Ano</label>
+              <select id="finIndAno" onchange="loadFinIndicadores()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
+            </div>
+            <div>
+              <label for="finIndVisao" class="text-gray-400 text-xs block mb-1">Gráfico</label>
+              <select id="finIndVisao" onchange="finDesenharMensal()" class="input-field rounded-lg px-3 py-2 text-sm">
+                <option value="mensal" selected>Custo de cada mês</option>
+                <option value="acumulado">Acumulado no ano</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="finIndResumo" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+        <div id="finIndSgbCards" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <div id="finIndMensalTitulo" class="text-gray-400 text-xs mb-2">Custo mensal por SGB (R$)</div>
+            <div style="height:260px"><canvas id="finIndMensalChart"></canvas></div>
+          </div>
+          <div>
+            <div class="text-gray-400 text-xs mb-2">Custo no ano por categoria (R$)</div>
+            <div style="height:260px"><canvas id="finIndCatChart"></canvas></div>
+          </div>
+        </div>
+        <details class="mt-4" open>
+          <summary class="text-gray-400 text-xs cursor-pointer select-none">Ver em tabela — SGB × mês</summary>
+          <div class="overflow-x-auto mt-2">
+            <table class="w-full text-xs">
+              <thead id="finIndTabelaHead"></thead>
+              <tbody id="finIndTabela" class="text-gray-300"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+        <div class="card rounded-xl p-4">
+          <div class="text-white font-semibold text-sm mb-1">Custo por posto no ano</div>
+          <div class="text-gray-500 text-xs mb-3">Do mais caro ao mais barato</div>
+          <div id="finIndLocais" class="space-y-1.5"></div>
+        </div>
+        <div class="card rounded-xl p-4">
+          <div class="text-white font-semibold text-sm mb-1">Preenchimento do formulário</div>
+          <div class="text-gray-500 text-xs mb-3">% dos postos do SGB com algum valor lançado no mês</div>
+          <div class="overflow-x-auto"><table class="w-full text-xs" id="finIndPreench"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FINANÇAS — LANÇAMENTO DE GASTOS (formulário) ===== -->
+    <div id="tab-fin_lancamento" class="tab-panel">
+      <div class="card rounded-xl p-4 mb-6">
+        <div class="flex flex-wrap items-end gap-3 mb-3">
+          <div>
+            <label for="finLanAno" class="text-gray-400 text-xs block mb-1">Ano</label>
+            <select id="finLanAno" onchange="finLanTrocar()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label for="finLanSgb" class="text-gray-400 text-xs block mb-1">SGB</label>
+            <select id="finLanSgb" onchange="finLanTrocar()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label for="finLanMes" class="text-gray-400 text-xs block mb-1">Mês</label>
+            <select id="finLanMes" onchange="finLanTrocar()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
+          </div>
+          <div class="ml-auto flex items-center gap-3">
+            <span id="finLanStatus" class="text-xs text-gray-500"></span>
+            <button id="finLanSalvarBtn" onclick="finLanSalvar()" class="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-40" style="background:#B22222" disabled>Salvar mês</button>
+          </div>
+        </div>
+        <div class="text-gray-500 text-[11px] mb-3">
+          Valor em reais (ex.: <span class="text-gray-300">1.234,56</span>). O que não tiver valor, deixe em branco.
+        </div>
+        <div id="finLanErro" class="hidden text-red-400 text-sm mb-3"></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead id="finLanHead"></thead>
+            <tbody id="finLanBody" class="divide-y divide-gray-800"></tbody>
+            <tfoot id="finLanFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="card rounded-xl p-4">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+          <div>
+            <div class="text-white font-semibold text-sm">Recursos da UGE no ano</div>
+            <div class="text-gray-500 text-xs">TAC, emendas, FUNDABOM, RINEM... — entram no total geral do 11º GB</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="finUgeStatus" class="text-xs text-gray-500"></span>
+            <button onclick="finUgeAdicionar()" class="px-3 py-2 rounded-lg text-sm border border-gray-700 text-gray-300 hover:border-gray-500">+ Item</button>
+            <button id="finUgeSalvarBtn" onclick="finUgeSalvar()" class="px-4 py-2 rounded-lg text-sm text-white font-medium disabled:opacity-40" style="background:#B22222" disabled>Salvar recursos</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="text-gray-500 text-xs text-left border-b border-gray-800">
+              <th class="py-2 pr-3">Item</th><th class="pr-3 w-40 text-right">Valor (R$)</th><th class="pr-3 w-56">Fonte pagadora</th><th class="w-8"></th>
+            </tr></thead>
+            <tbody id="finUgeBody" class="divide-y divide-gray-800"></tbody>
+            <tfoot id="finUgeFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== UGE — CONTROLE DE PROCESSOS ===== -->
     <div id="tab-uge" class="tab-panel">
 
@@ -2038,6 +2310,27 @@
   </div><!-- /content -->
 </main>
 
+
+<!-- ===== MODAL: LINHA DO TEMPO DA VIATURA ===== -->
+<div id="vtrHistModal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto" onclick="if(event.target===this)vtrFecharHist()">
+  <div class="card rounded-2xl w-full max-w-3xl mt-10 p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div id="vtrHistTitulo" class="text-white font-bold text-lg font-mono"></div>
+        <div id="vtrHistCad" class="text-gray-400 text-xs mt-1"></div>
+      </div>
+      <button onclick="vtrFecharHist()" class="text-gray-500 hover:text-white text-xl leading-none">✕</button>
+    </div>
+    <div id="vtrHistAgora" class="mb-4"></div>
+    <div class="text-white font-semibold text-sm mb-2">Situação ao longo do tempo</div>
+    <div id="vtrHistBarra" class="flex h-3 rounded overflow-hidden mb-1 bg-gray-800"></div>
+    <div id="vtrHistBarraLeg" class="flex justify-between text-[10px] text-gray-500 mb-4"></div>
+    <div id="vtrHistPeriodos" class="space-y-1 max-h-64 overflow-y-auto pr-1 mb-5"></div>
+    <div class="text-white font-semibold text-sm mb-2">Trocas registradas no SIOPM</div>
+    <div id="vtrHistTrocas" class="space-y-1 max-h-48 overflow-y-auto pr-1"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL: PENDÊNCIAS DA UGE ===== -->
 <div id="pendModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur">
   <div class="card rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border-2 border-bombeiro-500/30" style="border-color:rgba(178,34,34,0.4)">
@@ -2238,8 +2531,11 @@ const TAB_META = {
   elogios:     { title: 'Elogios e Láureas', subtitle: 'Reconhecimentos — B/5' },
   realocacao:  { title: 'Realocação de Efetivo', subtitle: 'Simulador de Distribuição — B/1' },
   uge:         { title: 'Controle de Processos', subtitle: 'UGE 990210 — 11° GB' },
+  fin_indicadores: { title: 'Custos por SGB', subtitle: 'Finanças — gastos das prefeituras e recursos da UGE' },
+  fin_lancamento:  { title: 'Lançamento de gastos', subtitle: 'Finanças — cada SGB lança o mês por posto' },
   sjd:         { title: 'Justiça e Disciplina', subtitle: 'SJD — Processos disciplinares e indicadores' },
   usuarios:    { title: 'Usuários', subtitle: 'Quem acessa o painel e com qual perfil' },
+  permissoes:  { title: 'Permissões', subtitle: 'O que cada praça enxerga no painel' },
 };
 
 let currentTab = null;
@@ -2257,7 +2553,7 @@ function showTab(name) {
 
   currentTab = name;
   if (name === 'ppmq') loadPpmq();
-  if (name === 'viaturas') { loadFiltros(); loadViaturas(1); loadResumoViaturas(); }
+  if (name === 'viaturas') { loadFiltros(); loadViaturas(1); loadResumoViaturas(); loadVtrComplementos(); }
   if (name === 'pessoal') loadPessoal();
   if (name === 'saude') loadSaude();
   if (name === 'taf') loadTafModule();
@@ -2268,15 +2564,18 @@ function showTab(name) {
   if (name === 'elogios') loadElogios();
   if (name === 'realocacao') loadRealocacao();
   if (name === 'uge') loadUGE();
+  if (name === 'fin_indicadores') loadFinIndicadores();
+  if (name === 'fin_lancamento') loadFinLancamento();
   if (name === 'sjd') loadSJD();
   if (name === 'usuarios') loadUsuarios();
+  if (name === 'permissoes') loadPermissoes();
 }
 
 // Find first accessible tab
 // Ordem em que as abas aparecem no menu — a primeira que a pessoa tem acesso
 // é a que abre. Praça de B/4 abre em Viaturas; de St UGE, em Processos.
 const ORDEM_ABAS = ['ppmq','viaturas','pessoal','saude','taf','mapa',
-                    'ocorrencias','auditoria_cobom','eap','elogios','realocacao','uge','sjd','usuarios'];
+                    'ocorrencias','auditoria_cobom','eap','elogios','realocacao','fin_indicadores','fin_lancamento','uge','sjd','usuarios','permissoes'];
 
 async function iniciarPainel() {
   try {
@@ -2568,22 +2867,323 @@ const STATUS_BADGE = {
 function renderViaturasTable(rows) {
   const tbody = document.getElementById('viaturasBody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-600">Nenhuma viatura encontrada</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-600">Nenhuma viatura encontrada</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => {
     const badge = STATUS_BADGE[r.status] || 'bg-gray-800 text-gray-400';
     return `<tr class="table-row">
-      <td class="px-4 py-3 text-white font-mono font-semibold">${r.prefixo ?? '—'}</td>
+      <td class="px-4 py-3">${r.prefixo ? vtrLinkPrefixo(r.prefixo) : '—'}</td>
       <td class="px-4 py-3 text-gray-300">${r.sgb ?? '—'}</td>
-      <td class="px-4 py-3 text-gray-300">${r.pb_bb ?? '—'}</td>
-      <td class="px-4 py-3 text-gray-300">${r.nome_estacao ?? '—'}</td>
+      <td class="px-4 py-3"><div class="text-gray-200">${vtrEsc(r.nome_estacao ?? '—')}</div>
+        <div class="text-gray-500 text-xs">${[r.pb_bb, r.municipio].filter(Boolean).map(vtrEsc).join(' · ')}</div></td>
       <td class="px-4 py-3 text-gray-300">${r.tipo ?? '—'}</td>
-      <td class="px-4 py-3 text-gray-300">${r.ano_fabricacao ?? '—'}</td>
+      <td class="px-4 py-3 text-gray-300 whitespace-nowrap">${r.ano_fabricacao ? `${r.ano_fabricacao} <span class="text-gray-500 text-xs">(${r.idade_anos} anos)</span>` : '—'}</td>
       <td class="px-4 py-3 text-gray-300">${r.proprietario ?? '—'}</td>
       <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badge}">${r.status ?? '—'}</span></td>
     </tr>`;
   }).join('');
+}
+
+
+// ======================== VIATURAS — COMPLEMENTOS ========================
+// Disponibilidade (capturas do nível operacional), uso × idade (tempo-resposta),
+// custo (Finanças), cadastro incompleto e linha do tempo de cada viatura.
+// Backend: routers/viaturas.py, seção "COMPLEMENTOS".
+// Eixo e data curta dos gráficos (no painel real vêm do histórico do nível
+// operacional, que esta versão de demonstração não tem).
+const NIVEL_EIXO = { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { color: '#21262d' } };
+function fmtDataCurta(iso) {
+  const [a, m, d] = iso.split('-');
+  return `${d}/${m}`;
+}
+const VTR_GRP_COR = { O: '#4ade80', R: '#60a5fa', B: '#f87171' };
+const VTR_GRP_NOME = { O: 'Operando', R: 'Reserva', B: 'Baixada' };
+const vtrSgbCor = sgb => ({ '1': '#60a5fa', '2': '#4ade80', '3': '#fab219', '4': '#f87171' }[String(sgb || '').match(/\d/)?.[0]] || '#9ca3af');
+const vtrEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const vtrCharts = {};
+let vtrDisp = null, vtrUso = null, vtrDispVerTodas = false;
+
+function vtrLinkPrefixo(p) {
+  return `<button onclick="vtrAbrirHist('${vtrEsc(p)}')" class="font-mono font-semibold text-white hover:text-sky-300 underline decoration-dotted whitespace-nowrap">${vtrEsc(p)}</button>`;
+}
+
+function vtrSecao(nome) {
+  document.getElementById('vtrSecIndicadores').classList.toggle('hidden', nome !== 'indicadores');
+  document.getElementById('vtrSecLista').classList.toggle('hidden', nome !== 'lista');
+  document.querySelectorAll('.vtr-sec').forEach(b => {
+    const ativo = b.dataset.vtrsec === nome;
+    b.classList.toggle('border-red-600', ativo);
+    b.classList.toggle('text-white', ativo);
+    b.classList.toggle('border-transparent', !ativo);
+    b.classList.toggle('text-gray-400', !ativo);
+  });
+  try { localStorage.setItem('vtrSecao', nome); } catch {}
+}
+
+function loadVtrComplementos() {
+  let sec = 'indicadores';
+  try { sec = localStorage.getItem('vtrSecao') || sec; } catch {}
+  vtrSecao(sec === 'lista' ? 'lista' : 'indicadores');
+  loadVtrDisponibilidade();
+  loadVtrUso();
+  loadVtrCusto();
+  loadVtrCadastro();
+}
+
+async function loadVtrDisponibilidade() {
+  const dias = document.getElementById('vtrDispDias').value;
+  try { vtrDisp = await apiFetch(`/viaturas/disponibilidade?dias=${dias}`); }
+  catch (e) {
+    document.getElementById('vtrDispResumo').innerHTML = `<div class="text-red-400 text-xs col-span-4">Não foi possível carregar: ${vtrEsc(e.message)}</div>`;
+    return;
+  }
+  const d = vtrDisp, v = d.viaturas, serie = d.serie;
+  const dias_ = [...new Set(serie.map(x => x.dia))].sort();
+  document.getElementById('vtrDispSub').textContent = dias_.length
+    ? `Capturas do nível operacional de ${fmtDataCurta(dias_[0])} a ${fmtDataCurta(dias_[dias_.length - 1])} — a coleta começou em ${fmtDataCurta(d.primeira_captura)}`
+    : 'Sem capturas no período';
+
+  const media = campo => v.length ? (v.reduce((a, x) => a + (x[campo] || 0), 0) / v.length) : 0;
+  const nunca = v.filter(x => x.pct_baixada >= 99.5).length;
+  // Em descarga = saindo da frota; baixada o tempo todo por isso não é defeito.
+  const descarga = v.filter(x => x.pct_baixada >= 99.5 && /DESCARGA/.test(x.status_frota || '')).length;
+  const card = (rot, val, extra = '', cor = '') => `
+    <div class="rounded-lg p-3 border border-gray-800 bg-gray-900/50">
+      <div class="text-gray-500 text-[11px]">${rot}</div>
+      <div class="text-lg font-semibold" style="color:${cor || '#fff'}">${val}</div>
+      ${extra ? `<div class="text-gray-500 text-[11px]">${extra}</div>` : ''}
+    </div>`;
+  document.getElementById('vtrDispResumo').innerHTML = [
+    card('Tempo operando (média)', media('pct_operando').toFixed(1) + '%', `${v.length} viaturas acompanhadas`, VTR_GRP_COR.O),
+    card('Tempo em reserva (média)', media('pct_reserva').toFixed(1) + '%', '', VTR_GRP_COR.R),
+    card('Tempo baixada (média)', media('pct_baixada').toFixed(1) + '%', '', VTR_GRP_COR.B),
+    card('Baixadas o período todo', nunca, `não operaram nenhum dia — ${descarga} delas em descarga`, nunca ? VTR_GRP_COR.B : ''),
+  ].join('');
+
+  const sgbs = [...new Set(serie.map(x => x.sgb))].sort();
+  const pctBaixada = (dia, sgb) => {
+    const x = serie.find(s => s.dia === dia && s.sgb === sgb);
+    const tot = x ? x.operando + x.reserva + x.baixada : 0;
+    return tot ? +(100 * x.baixada / tot).toFixed(1) : null;
+  };
+  vtrCharts.sgb?.destroy();
+  vtrCharts.sgb = new Chart(document.getElementById('vtrDispSgbChart'), {
+    type: 'line',
+    data: { labels: dias_.map(fmtDataCurta), datasets: sgbs.map(s => ({
+      label: s, data: dias_.map(dia => pctBaixada(dia, s)), borderColor: vtrSgbCor(s), backgroundColor: vtrSgbCor(s),
+      borderWidth: 2, tension: 0.25, pointRadius: dias_.length > 60 ? 0 : 3, pointHoverRadius: 5,
+    })) },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } },
+                 tooltip: { callbacks: { label: it => ` ${it.dataset.label}: ${it.raw}% baixada` } } },
+      scales: { x: NIVEL_EIXO, y: { ...NIVEL_EIXO, beginAtZero: true, ticks: { ...NIVEL_EIXO.ticks, callback: x => x + '%' } } },
+    },
+  });
+
+  const somaDia = (dia, campo) => +serie.filter(s => s.dia === dia).reduce((a, s) => a + s[campo], 0).toFixed(1);
+  vtrCharts.frota?.destroy();
+  vtrCharts.frota = new Chart(document.getElementById('vtrDispFrotaChart'), {
+    type: 'bar',
+    data: { labels: dias_.map(fmtDataCurta), datasets: [['operando', 'O'], ['reserva', 'R'], ['baixada', 'B']].map(([c, g]) => ({
+      label: VTR_GRP_NOME[g], data: dias_.map(dia => somaDia(dia, c)), backgroundColor: VTR_GRP_COR[g], borderWidth: 0,
+    })) },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } } },
+      scales: { x: { ...NIVEL_EIXO, stacked: true }, y: { ...NIVEL_EIXO, stacked: true, beginAtZero: true } },
+    },
+  });
+  vtrDesenharTabelaDisp();
+}
+
+function vtrDesenharTabelaDisp() {
+  const v = (vtrDisp?.viaturas || []).filter(x => x.pct_baixada > 0);
+  const lista = vtrDispVerTodas ? v : v.slice(0, 15);
+  const barra = x => ['O', 'R', 'B'].map(g => {
+    const pct = x[{ O: 'pct_operando', R: 'pct_reserva', B: 'pct_baixada' }[g]] || 0;
+    return pct ? `<div style="width:${pct}%;background:${VTR_GRP_COR[g]}" title="${VTR_GRP_NOME[g]}: ${pct}%"></div>` : '';
+  }).join('');
+  document.getElementById('vtrDispTabela').innerHTML = lista.map(x => `
+    <tr class="border-b border-gray-800/60">
+      <td class="py-1.5 pr-3">${vtrLinkPrefixo(x.prefixo)}</td>
+      <td class="pr-3"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${vtrSgbCor(x.sgb)}"></span>${vtrEsc(x.sgb)}</td>
+      <td class="pr-3">${vtrEsc(x.tipo || '—')}</td>
+      <td class="pr-3 text-right">${x.idade_anos ?? '—'}</td>
+      <td class="pr-3"><div class="flex h-2.5 rounded overflow-hidden bg-gray-800">${barra(x)}</div>
+        <div class="text-[10px] text-gray-500 mt-0.5">${x.pct_baixada}% baixada · ${x.pct_operando}% operando</div></td>
+      <td class="pr-3 text-right">${x.dias_baixada} de ${x.dias_observados}</td>
+      <td class="text-right">${x.baixas}</td>
+    </tr>`).join('') || '<tr><td colspan="7" class="py-3 text-gray-500">Nenhuma viatura ficou baixada no período.</td></tr>';
+  const btn = document.getElementById('vtrDispMais');
+  btn.classList.toggle('hidden', v.length <= 15);
+  btn.textContent = vtrDispVerTodas ? 'Mostrar só as 15 primeiras' : `Ver todas as ${v.length} que tiveram baixa`;
+}
+
+async function loadVtrUso() {
+  try { vtrUso = await apiFetch('/viaturas/uso'); }
+  catch (e) { document.getElementById('vtrUsoSub').textContent = 'Não foi possível carregar: ' + e.message; return; }
+  const sel = document.getElementById('vtrUsoAno');
+  if (!sel.options.length) {
+    sel.innerHTML = vtrUso.anos.slice().reverse().map(a => `<option>${a}</option>`).join('');
+  }
+  const ult = vtrUso.ultimo_dado;
+  document.getElementById('vtrUsoSub').textContent =
+    `Atendimentos por viatura (tempo-resposta). Os dados vão até ${ult ? ult.split('-').reverse().join('/') : '—'} — o ano corrente ainda não foi carregado.`;
+  vtrDesenharUso();
+}
+
+function vtrDesenharUso() {
+  if (!vtrUso) return;
+  const ano = document.getElementById('vtrUsoAno').value;
+  const pts = vtrUso.viaturas.map(v => ({ ...v, n: v.por_ano[ano]?.atendimentos || 0, t: v.por_ano[ano]?.t_resposta_min }))
+    .filter(v => v.idade_anos != null);
+  const sgbs = [...new Set(pts.map(p => p.sgb))].sort();
+  vtrCharts.uso?.destroy();
+  vtrCharts.uso = new Chart(document.getElementById('vtrUsoChart'), {
+    type: 'scatter',
+    data: { datasets: sgbs.map(s => ({
+      label: s, data: pts.filter(p => p.sgb === s).map(p => ({ x: p.idade_anos, y: p.n, p })),
+      backgroundColor: vtrSgbCor(s) + 'cc', borderColor: vtrSgbCor(s), pointRadius: 4, pointHoverRadius: 7,
+    })) },
+    options: {
+      maintainAspectRatio: false,
+      onClick: (ev, els) => { if (els[0]) vtrAbrirHist(els[0].element.$context.raw.p.prefixo); },
+      plugins: {
+        legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: it => { const p = it.raw.p;
+          return ` ${p.prefixo} (${p.tipo || '—'}) — ${p.idade_anos} anos, ${p.n} atendimentos${p.t != null ? `, resposta mediana ${p.t} min` : ''}`; } } },
+      },
+      scales: {
+        x: { ...NIVEL_EIXO, title: { display: true, text: 'Idade (anos)', color: '#8b949e', font: { size: 11 } } },
+        y: { ...NIVEL_EIXO, beginAtZero: true, title: { display: true, text: `Atendimentos em ${ano}`, color: '#8b949e', font: { size: 11 } } },
+      },
+    },
+  });
+
+  // "Rodam muito": no quartil de cima de atendimentos do ano E com 10+ anos.
+  const usados = pts.map(p => p.n).filter(n => n > 0).sort((a, b) => a - b);
+  const p75 = usados.length ? usados[Math.floor(usados.length * 0.75)] : 0;
+  const crit = pts.filter(p => p.idade_anos >= 10 && p.n >= p75 && p.n > 0).sort((a, b) => b.n - a.n);
+  document.getElementById('vtrUsoCritTxt').textContent =
+    `10 anos ou mais e entre as 25% mais usadas em ${ano} (${p75}+ atendimentos) — candidatas a substituição`;
+  document.getElementById('vtrUsoCrit').innerHTML = crit.map(p => `
+    <div class="flex items-center gap-2 text-xs">
+      <div class="w-24">${vtrLinkPrefixo(p.prefixo)}</div>
+      <div class="w-14 text-gray-500">${vtrEsc(p.sgb)}</div>
+      <div class="w-16 text-gray-300">${p.idade_anos} anos</div>
+      <div class="flex-1 text-right text-gray-300">${p.n} atend.</div>
+    </div>`).join('') || '<div class="text-gray-500 text-xs">Nenhuma.</div>';
+  // Só tipos que normalmente atendem ocorrência (algum do tipo passou de 20 no
+  // ano). Sem isso a lista enche de MOB, MT, TP e VO, que não aparecem no
+  // tempo-resposta por natureza, não por estarem paradas.
+  const tiposQueAtendem = new Set(pts.filter(p => p.n > 20).map(p => p.tipo));
+  const pouco = pts.filter(p => p.n <= 5 && tiposQueAtendem.has(p.tipo)).sort((a, b) => a.n - b.n);
+  document.getElementById('vtrUsoPouco').innerHTML = pouco.map(p =>
+    `<span class="text-[11px] bg-gray-800 rounded px-1.5 py-0.5">${vtrLinkPrefixo(p.prefixo)} <span class="text-gray-500">${p.n}</span></span>`
+  ).join('') || '<div class="text-gray-500 text-xs">Nenhuma.</div>';
+}
+
+async function loadVtrCusto() {
+  const sel = document.getElementById('vtrCustoAno');
+  if (!sel.options.length) {
+    const atual = new Date().getFullYear();
+    sel.innerHTML = [atual, atual - 1].map(a => `<option>${a}</option>`).join('');
+  }
+  let d;
+  try { d = await apiFetch(`/viaturas/custo-sgb?ano=${sel.value}`); }
+  catch (e) { document.getElementById('vtrCustoBody').innerHTML = `<tr><td colspan="6" class="py-3 text-red-400">${vtrEsc(e.message)}</td></tr>`; return; }
+  const brl = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  document.getElementById('vtrCustoBody').innerHTML = d.sgbs.map(s => `
+    <tr class="border-b border-gray-800/60">
+      <td class="py-1.5 pr-2 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${vtrSgbCor(s.sgb)}"></span>${vtrEsc(s.sgb)}</td>
+      <td class="pr-2 text-right">${s.viaturas}</td>
+      <td class="pr-2 text-right whitespace-nowrap">${brl(s.manutencao)}</td>
+      <td class="pr-2 text-right whitespace-nowrap">${brl(s.combustivel)}</td>
+      <td class="pr-2 text-right whitespace-nowrap font-semibold text-white">${s.custo_por_viatura_mes != null ? brl(s.custo_por_viatura_mes) : '—'}</td>
+      <td class="text-right">${s.pct_disponivel_30d != null ? s.pct_disponivel_30d + '%' : '—'}</td>
+    </tr>`).join('');
+}
+
+async function loadVtrCadastro() {
+  let d;
+  try { d = await apiFetch('/viaturas/cadastro-incompleto'); }
+  catch (e) { document.getElementById('vtrCadLista').innerHTML = `<div class="text-red-400 text-xs">${vtrEsc(e.message)}</div>`; return; }
+  document.getElementById('vtrCadSub').textContent =
+    `${d.viaturas.length} de ${d.total_frota} viaturas com algum campo vazio na planilha da B/4 (${d.campos.join(', ')})`;
+  document.getElementById('vtrCadLista').innerHTML = d.viaturas.map(v => `
+    <div class="flex items-start gap-2 text-xs border-b border-gray-800/60 pb-1.5">
+      <div class="w-24 flex-shrink-0">${vtrLinkPrefixo(v.prefixo)}</div>
+      <div class="w-14 flex-shrink-0 text-gray-500">${vtrEsc(v.sgb)}</div>
+      <div class="flex-1 flex flex-wrap gap-1">${v.faltam.map(f => `<span class="bg-amber-900/40 text-amber-300 rounded px-1.5 py-0.5 text-[11px]">${vtrEsc(f)}</span>`).join('')}</div>
+    </div>`).join('') || '<div class="text-emerald-400 text-xs">Cadastro completo.</div>';
+}
+
+// ---------- Linha do tempo de uma viatura ----------
+function vtrFecharHist() { document.getElementById('vtrHistModal').classList.add('hidden'); }
+
+function vtrDuracao(ms) {
+  const h = ms / 3600000;
+  if (h < 1) return `${Math.max(1, Math.round(ms / 60000))} min`;
+  if (h < 48) return `${h.toFixed(h < 10 ? 1 : 0)} h`;
+  return `${(h / 24).toFixed(1)} dias`;
+}
+
+async function vtrAbrirHist(prefixo) {
+  const modal = document.getElementById('vtrHistModal');
+  document.getElementById('vtrHistTitulo').textContent = prefixo;
+  ['vtrHistCad', 'vtrHistAgora', 'vtrHistBarra', 'vtrHistBarraLeg', 'vtrHistPeriodos', 'vtrHistTrocas'].forEach(id => document.getElementById(id).innerHTML = '');
+  document.getElementById('vtrHistPeriodos').innerHTML = '<div class="text-gray-500 text-xs">Carregando...</div>';
+  modal.classList.remove('hidden');
+  let d;
+  try { d = await apiFetch(`/viaturas/historico/${encodeURIComponent(prefixo)}`); }
+  catch (e) { document.getElementById('vtrHistPeriodos').innerHTML = `<div class="text-red-400 text-xs">${vtrEsc(e.message)}</div>`; return; }
+
+  const c = d.cadastro;
+  document.getElementById('vtrHistCad').innerHTML = [
+    [c.tipo, c.fabricante, c.modelo].filter(Boolean).join(' · '),
+    c.ano_fabricacao ? `${c.ano_fabricacao} (${c.idade_anos} anos)` : null,
+    c.placa ? `placa ${c.placa}` : null,
+    [c.sgb, c.pb_bb, c.nome_estacao].filter(Boolean).join(' · '),
+    c.proprietario,
+  ].filter(Boolean).map(vtrEsc).join('<br>');
+
+  // Períodos vêm do mais recente para o mais antigo; o fim de cada um é o
+  // início do seguinte (o mais recente termina "agora" = última captura vista).
+  const per = d.periodos.map((p, i) => ({
+    ...p, ini: new Date(p.inicio),
+    fim: i === 0 ? new Date(p.ultimo_visto) : new Date(d.periodos[i - 1].inicio),
+  }));
+  if (per.length) {
+    const a = per[0];
+    document.getElementById('vtrHistAgora').innerHTML = `
+      <div class="rounded-lg p-3 border border-gray-800 bg-gray-900/50 text-sm">
+        <span class="inline-block w-2.5 h-2.5 rounded-full mr-1" style="background:${VTR_GRP_COR[a.grp] || '#6b7280'}"></span>
+        <span class="text-white font-semibold">${vtrEsc(a.status)}</span>
+        <span class="text-gray-400"> há ${vtrDuracao(a.fim - a.ini)} (desde ${a.ini.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })})</span>
+      </div>`;
+    const t0 = per[per.length - 1].ini, t1 = per[0].fim, total = Math.max(1, t1 - t0);
+    document.getElementById('vtrHistBarra').innerHTML = per.slice().reverse().map(p =>
+      `<div style="width:${(100 * (p.fim - p.ini) / total).toFixed(2)}%;background:${VTR_GRP_COR[p.grp] || '#6b7280'}" title="${vtrEsc(p.status)} — ${vtrDuracao(p.fim - p.ini)}"></div>`).join('');
+    document.getElementById('vtrHistBarraLeg').innerHTML =
+      `<span>${t0.toLocaleDateString('pt-BR')}</span><span>${Object.entries(VTR_GRP_NOME).map(([g, n]) => `<span class="inline-block w-2 h-2 rounded-full mx-1" style="background:${VTR_GRP_COR[g]}"></span>${n}`).join(' ')}</span><span>${t1.toLocaleDateString('pt-BR')}</span>`;
+  }
+  document.getElementById('vtrHistPeriodos').innerHTML = per.map(p => `
+    <div class="flex items-center gap-2 text-xs">
+      <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" style="background:${VTR_GRP_COR[p.grp] || '#6b7280'}"></span>
+      <span class="w-36 text-gray-200">${vtrEsc(p.status)}</span>
+      <span class="flex-1 text-gray-500">${p.ini.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} → ${p.fim.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+      <span class="w-20 text-right text-gray-300">${vtrDuracao(p.fim - p.ini)}</span>
+    </div>`).join('') || '<div class="text-gray-500 text-xs">Esta viatura não aparece nas capturas do nível operacional.</div>';
+
+  const CAMPO = { status: 'Situação', nome_estacao: 'Estação', municipio: 'Município', pb_bb: 'PB/BB', sgb: 'SGB', CRIADA: 'Cadastro criado' };
+  document.getElementById('vtrHistTrocas').innerHTML = d.trocas.map(t => `
+    <div class="flex gap-2 text-xs">
+      <span class="w-32 flex-shrink-0 text-gray-500">${new Date(t.executado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
+      <span class="w-24 flex-shrink-0 text-gray-400">${vtrEsc(CAMPO[t.campo] || t.campo)}</span>
+      <span class="text-gray-300">${t.antes != null ? vtrEsc(t.antes) + ' → ' : ''}<span class="text-white">${vtrEsc(t.depois ?? '')}</span></span>
+    </div>`).join('') || '<div class="text-gray-500 text-xs">Nenhuma troca registrada.</div>';
 }
 
 // ======================== PESSOAL ========================
@@ -3529,12 +4129,111 @@ const USR_ABA_NOME = {
   ppmq: 'PPMQ', viaturas: 'Viaturas', pessoal: 'Pessoal', saude: 'Saúde',
   taf: 'TAF', mapa: 'Mapa de Força', ocorrencias: 'Ocorrências', auditoria_cobom: 'Auditoria COBOM', eap: 'EAP',
   elogios: 'Elogios', realocacao: 'Realocação', uge: 'Processos',
-  sjd: 'Justiça e Disciplina', usuarios: 'Usuários',
+  fin_indicadores: 'Custos por SGB', fin_lancamento: 'Lançamento de gastos',
+  sjd: 'Justiça e Disciplina', usuarios: 'Usuários', permissoes: 'Permissões',
 };
 
 function usrPerfilMudou() {
   const ehPraca = document.getElementById('usrPerfil').value === 'praca';
   document.getElementById('usrSecaoCampo').classList.toggle('hidden', !ehPraca);
+}
+
+// ======================== PERMISSÕES (admin) ========================
+// Matriz praça × aba. Quem decide continua sendo o backend (acesso.py): aqui
+// só se escolhe, e a regra do SJD é aplicada lá de qualquer jeito.
+let permDados = null;
+let permEdit = {};   // id -> Set de abas marcadas (só dos alterados)
+
+async function loadPermissoes() {
+  if (Object.keys(permEdit).length && !confirm('Há alterações não salvas. Descartar?')) return;
+  permEdit = {};
+  try { permDados = await apiFetch('/usuarios'); }
+  catch (e) { document.getElementById('permBody').innerHTML = `<tr><td class="py-4 text-red-400">${e.message}</td></tr>`; return; }
+  permDesenhar();
+}
+
+function permPodeTer(aba, secao) {
+  const exige = permDados.abas_restritas_a_secao[aba];
+  return !exige || exige === secao;
+}
+
+function permDesenhar() {
+  const d = permDados;
+  const abas = d.abas_atribuiveis;
+  const pracas = d.usuarios.filter(u => u.perfil === 'praca');
+  document.getElementById('permHead').innerHTML = `<tr class="text-gray-500 text-xs border-b border-gray-800">
+    <th class="text-left py-2 pr-4 sticky left-0 bg-[#161b22]">Praça</th>
+    ${abas.map(a => `<th class="px-1 pb-2 align-bottom"><div class="w-16 text-center leading-tight">${USR_ABA_NOME[a] || a}</div></th>`).join('')}
+    <th></th></tr>`;
+  document.getElementById('permBody').innerHTML = pracas.map(u => {
+    const marcadas = permEdit[u.id] || new Set(u.abas);
+    const alterado = !!permEdit[u.id];
+    const personalizado = u.abas_personalizadas !== null;
+    return `<tr class="${u.ativo ? '' : 'opacity-50'}">
+      <td class="py-2 pr-4 sticky left-0 bg-[#161b22]">
+        <div class="text-gray-200 whitespace-nowrap">${u.nome}${u.ativo ? '' : ' <span class="text-gray-500 text-xs">(desativado)</span>'}</div>
+        <div class="text-[11px] ${alterado ? 'text-amber-400' : personalizado ? 'text-sky-400' : 'text-gray-500'}">
+          ${u.secao || 'sem seção'} · ${alterado ? 'alterado, não salvo' : personalizado ? 'ajustado' : 'padrão da seção'}</div>
+      </td>
+      ${abas.map(a => {
+        const pode = permPodeTer(a, u.secao);
+        return `<td class="text-center px-1"><input type="checkbox" class="w-4 h-4 accent-sky-500 ${pode ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}"
+          ${marcadas.has(a) ? 'checked' : ''} ${pode ? '' : 'disabled title="Só para praça da seção SJD"'}
+          onchange="permMarcar(${u.id}, '${a}', this.checked)"></td>`;
+      }).join('')}
+      <td class="pl-3 whitespace-nowrap">${personalizado || alterado
+        ? `<button onclick="permPadrao(${u.id})" class="text-xs text-gray-400 hover:text-white underline">voltar ao padrão</button>` : ''}</td>
+    </tr>`;
+  }).join('') || '<tr><td class="py-4 text-gray-500">Nenhum praça cadastrado.</td></tr>';
+
+  const outros = d.usuarios.filter(u => u.ativo && ['admin', 'oficial'].includes(u.perfil));
+  document.getElementById('permOficiais').textContent = outros.length
+    ? `Veem tudo: ${outros.map(u => u.nome).join(', ')}.` : '';
+  const n = Object.keys(permEdit).length;
+  document.getElementById('permSalvarBtn').disabled = !n;
+  document.getElementById('permStatus').textContent = n ? `${n} praça(s) com alteração não salva` : '';
+}
+
+function permMarcar(id, aba, marcado) {
+  const u = permDados.usuarios.find(x => x.id === id);
+  const set = permEdit[id] || new Set(u.abas);
+  marcado ? set.add(aba) : set.delete(aba);
+  permEdit[id] = set;
+  permDesenhar();
+}
+
+async function permPadrao(id) {
+  delete permEdit[id];
+  const u = permDados.usuarios.find(x => x.id === id);
+  if (u.abas_personalizadas === null) return permDesenhar();
+  if (!confirm(`${u.nome} volta a ver só as abas padrão da seção ${u.secao}. Confirmar?`)) return permDesenhar();
+  try { await permEnviar(id, null); }
+  catch (e) { document.getElementById('permStatus').textContent = 'Erro: ' + e.message; }
+  permDesenhar();
+}
+
+async function permEnviar(id, abas) {
+  const res = await fetch(`${API}/usuarios/${id}/abas`, {
+    method: 'PUT', headers: authHeaders(), body: JSON.stringify({ abas }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Erro ${res.status}`);
+  const i = permDados.usuarios.findIndex(x => x.id === id);
+  permDados.usuarios[i] = data.usuario;
+}
+
+async function permSalvar() {
+  const btn = document.getElementById('permSalvarBtn');
+  btn.disabled = true;
+  const erros = [];
+  for (const [id, set] of Object.entries(permEdit)) {
+    try { await permEnviar(+id, [...set]); delete permEdit[id]; }
+    catch (e) { erros.push(`${permDados.usuarios.find(x => x.id === +id)?.nome}: ${e.message}`); }
+  }
+  permDesenhar();
+  document.getElementById('permStatus').textContent = erros.length
+    ? 'Erro — ' + erros.join(' | ')
+    : 'Permissões salvas. Valem quando a pessoa recarregar o painel.';
 }
 
 async function loadUsuarios() {
@@ -4312,6 +5011,420 @@ async function baixarPendencia(processoId) {
     console.error(e);
     alert('Erro: ' + e.message);
     if (card) card.style.opacity = '1';
+  }
+}
+
+// ======================== FINANÇAS — CUSTOS POR SGB ========================
+// Substitui a planilha "Gastos das prefeituras por SGB". Backend: routers/financas.py.
+const FIN_MESES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const FIN_SGB_COR = { '1°SGB': '#60a5fa', '2°SGB': '#4ade80', '3°SGB': '#fab219', '4°SGB': '#f87171' };
+const FIN_CAT_COR = ['#a78bfa', '#38bdf8', '#facc15', '#fb923c', '#f472b6', '#4ade80', '#94a3b8'];
+const finBRL = v => (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const finBRLc = v => {
+  const n = v ?? 0;
+  if (Math.abs(n) >= 1e6) return 'R$ ' + (n / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' mi';
+  if (Math.abs(n) >= 1e3) return 'R$ ' + (n / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil';
+  return finBRL(n);
+};
+const finEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let finEstrutura = null;
+let finInd = null;
+const finCharts = {};
+
+async function finCarregarEstrutura() {
+  if (!finEstrutura) finEstrutura = await apiFetch('/financas/estrutura');
+  return finEstrutura;
+}
+
+function finPreencherAnos(sel, anos) {
+  const atual = new Date().getFullYear();
+  const lista = [...new Set([atual, ...anos])].sort((a, b) => b - a);
+  const antes = sel.value;
+  sel.innerHTML = lista.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = antes && lista.includes(+antes) ? antes : (anos.includes(atual) || !anos.length ? atual : anos[0]);
+}
+
+async function loadFinIndicadores() {
+  try {
+    const est = await finCarregarEstrutura();
+    const selAno = document.getElementById('finIndAno');
+    if (!selAno.options.length) finPreencherAnos(selAno, est.anos);
+    finInd = await apiFetch(`/financas/indicadores?ano=${selAno.value}`);
+  } catch (e) {
+    console.error('[financas]', e);
+    document.getElementById('finIndResumo').innerHTML =
+      `<div class="text-red-400 text-xs col-span-4">Não foi possível carregar os custos: ${finEsc(e.message)}</div>`;
+    return;
+  }
+  const d = finInd;
+  const totSgb = Object.fromEntries(d.sgbs.map(s => [s, d.por_sgb_mes[s].reduce((a, b) => a + b, 0)]));
+  // Média só dos meses que o SGB já lançou — mês vazio não é custo zero.
+  const mesesLanc = s => d.preenchimento[s].filter(p => p > 0).length;
+  const maior = d.sgbs.reduce((a, b) => totSgb[b] > totSgb[a] ? b : a, d.sgbs[0]);
+  const geral = d.total_prefeituras + d.total_uge;
+
+  const card = (rotulo, valor, extra = '', cor = '') => `
+    <div class="rounded-lg p-3 border border-gray-800 bg-gray-900/50">
+      <div class="text-gray-500 text-[11px]">${rotulo}</div>
+      <div class="text-white text-lg font-semibold"${cor ? ` style="color:${cor}"` : ''}>${valor}</div>
+      ${extra ? `<div class="text-gray-500 text-[11px]">${extra}</div>` : ''}
+    </div>`;
+  document.getElementById('finIndSub').textContent =
+    `Gastos das prefeituras lançados pelos SGBs em ${d.ano}, mais os recursos da UGE`;
+  document.getElementById('finIndResumo').innerHTML = [
+    card('Total geral do 11º GB', finBRLc(geral), finBRL(geral)),
+    card('Prefeituras (4 SGBs)', finBRLc(d.total_prefeituras), finBRL(d.total_prefeituras)),
+    card('Recursos da UGE', finBRLc(d.total_uge),
+      Object.entries(d.uge_por_fonte).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1])
+        .map(([f, v]) => `${f}: ${finBRLc(v)}`).join(' · ')),
+    card('SGB de maior custo', maior, `${finBRLc(totSgb[maior])} no ano`, FIN_SGB_COR[maior]),
+  ].join('');
+  document.getElementById('finIndSgbCards').innerHTML = d.sgbs.map(s => {
+    const n = mesesLanc(s);
+    const pct = d.total_prefeituras ? (100 * totSgb[s] / d.total_prefeituras).toFixed(1) : '0';
+    return card(`<span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${FIN_SGB_COR[s]}"></span>${s}`,
+      finBRLc(totSgb[s]),
+      `média ${finBRLc(n ? totSgb[s] / n : 0)}/mês · ${pct}% das prefeituras · ${n} mês(es) lançados`);
+  }).join('');
+
+  finDesenharMensal();
+
+  finCharts.cat?.destroy();
+  finCharts.cat = new Chart(document.getElementById('finIndCatChart'), {
+    type: 'bar',
+    data: { labels: d.sgbs, datasets: d.categorias.map((c, i) => ({
+      label: c.rotulo, data: d.sgbs.map(s => d.por_sgb_categoria[s][c.chave]),
+      backgroundColor: FIN_CAT_COR[i], borderWidth: 0,
+    })) },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: it => ` ${it.dataset.label}: ${finBRL(it.raw)}` } },
+      },
+      scales: { x: { ...NIVEL_EIXO, stacked: true },
+                y: { ...NIVEL_EIXO, stacked: true, ticks: { ...NIVEL_EIXO.ticks, callback: v => finBRLc(v) } } },
+    },
+  });
+
+  // Tabela SGB × mês
+  const th = 'py-1.5 pr-3 text-right';
+  document.getElementById('finIndTabelaHead').innerHTML =
+    `<tr class="text-gray-500 text-left border-b border-gray-800"><th class="py-1.5 pr-3">SGB</th>${
+      FIN_MESES.map(m => `<th class="${th}">${m}</th>`).join('')}<th class="${th}">Total</th></tr>`;
+  const linha = (rot, vals, forte = false) => `
+    <tr class="border-b border-gray-800/60${forte ? ' font-semibold text-white' : ''}">
+      <td class="py-1.5 pr-3 whitespace-nowrap">${rot}</td>
+      ${vals.map(v => `<td class="pr-3 text-right whitespace-nowrap">${v ? finBRL(v).replace('R$', '').trim() : '<span class="text-gray-600">—</span>'}</td>`).join('')}
+      <td class="pr-3 text-right whitespace-nowrap font-semibold">${finBRL(vals.reduce((a, b) => a + b, 0)).replace('R$', '').trim()}</td>
+    </tr>`;
+  const somaMes = FIN_MESES.map((_, i) => d.sgbs.reduce((a, s) => a + d.por_sgb_mes[s][i], 0));
+  document.getElementById('finIndTabela').innerHTML =
+    d.sgbs.map(s => linha(`<span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${FIN_SGB_COR[s]}"></span>${s}`, d.por_sgb_mes[s])).join('')
+    + linha('Total', somaMes, true);
+
+  // Ranking de postos
+  const maxLocal = Math.max(1, ...d.por_local.map(l => l.total));
+  document.getElementById('finIndLocais').innerHTML = d.por_local.map(l => `
+    <div class="flex items-center gap-2 text-xs">
+      <div class="w-36 flex-shrink-0 truncate text-gray-300" title="${finEsc(l.nome)}">${finEsc(l.nome)}</div>
+      <div class="flex-1 min-w-[60px] h-2 rounded bg-gray-800 overflow-hidden"><div class="h-2 rounded" style="width:${(100 * l.total / maxLocal).toFixed(1)}%;background:${FIN_SGB_COR[l.sgb]}"></div></div>
+      <div class="w-24 text-right text-gray-300">${finBRLc(l.total)}</div>
+      <div class="w-12 text-right text-gray-500">${l.sgb}</div>
+    </div>`).join('') || '<div class="text-gray-500 text-xs">Nenhum posto cadastrado.</div>';
+
+  // Preenchimento SGB × mês
+  const corPct = p => p >= 100 ? 'bg-emerald-900/50 text-emerald-300' : p > 0 ? 'bg-amber-900/40 text-amber-300' : 'bg-gray-800/60 text-gray-600';
+  document.getElementById('finIndPreench').innerHTML =
+    `<tr class="text-gray-500"><th class="text-left pr-2 py-1">SGB</th>${FIN_MESES.map(m => `<th class="px-0.5">${m}</th>`).join('')}</tr>`
+    + d.sgbs.map(s => `<tr><td class="pr-2 py-0.5 text-gray-300 whitespace-nowrap">${s}</td>${
+        d.preenchimento[s].map((p, i) => `<td class="px-0.5"><div class="rounded text-center py-1 ${corPct(p)}" title="${s} ${FIN_MESES[i]}: ${p}%">${Math.round(p)}</div></td>`).join('')}</tr>`).join('');
+}
+
+function finDesenharMensal() {
+  const d = finInd;
+  if (!d) return;
+  const acumulado = document.getElementById('finIndVisao').value === 'acumulado';
+  document.getElementById('finIndMensalTitulo').textContent =
+    acumulado ? 'Custo acumulado no ano por SGB (R$)' : 'Custo mensal por SGB (R$)';
+  // Meses ainda sem lançamento nenhum ficam fora da linha (null), senão ela
+  // despenca a zero no fim do ano e parece economia.
+  const serie = s => {
+    let soma = 0;
+    return d.por_sgb_mes[s].map((v, i) => {
+      if (d.preenchimento[s][i] === 0) return null;
+      soma += v;
+      return acumulado ? soma : v;
+    });
+  };
+  finCharts.mensal?.destroy();
+  finCharts.mensal = new Chart(document.getElementById('finIndMensalChart'), {
+    type: 'line',
+    data: { labels: FIN_MESES, datasets: d.sgbs.map(s => ({
+      label: s, data: serie(s), borderColor: FIN_SGB_COR[s], backgroundColor: FIN_SGB_COR[s],
+      borderWidth: 2, tension: 0.25, pointRadius: 3, pointHoverRadius: 5, spanGaps: false,
+    })) },
+    options: {
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e', boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: it => ` ${it.dataset.label}: ${it.raw == null ? 'não lançado' : finBRL(it.raw)}` } },
+      },
+      scales: { x: NIVEL_EIXO, y: { ...NIVEL_EIXO, beginAtZero: true, ticks: { ...NIVEL_EIXO.ticks, callback: v => finBRLc(v) } } },
+    },
+  });
+}
+
+// ------------------------------ Formulário de lançamento ------------------------------
+let finLanOriginal = {};   // "localId|cat" -> texto como veio do banco
+let finLanSujo = false;
+let finUgeItens = [];
+let finUgeSujo = false;
+
+function finParseValor(txt) {
+  // '' -> null (em branco) · '1.234,56' / '1234.56' -> número · inválido -> NaN
+  const s = String(txt).trim().replace(/^R\$\s*/i, '').replace(/\s/g, '');
+  if (!s) return null;
+  let n;
+  if (s.includes(',')) n = Number(s.replace(/\./g, '').replace(',', '.'));
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) n = Number(s.replace(/\./g, ''));
+  else n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : NaN;
+}
+const finFmtCampo = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+async function loadFinLancamento() {
+  let est;
+  try { est = await finCarregarEstrutura(); }
+  catch (e) { finLanErro('Não foi possível carregar a estrutura: ' + e.message); return; }
+  const selAno = document.getElementById('finLanAno');
+  const selSgb = document.getElementById('finLanSgb');
+  const selMes = document.getElementById('finLanMes');
+  if (!selAno.options.length) {
+    finPreencherAnos(selAno, est.anos);
+    selSgb.innerHTML = est.sgbs.map(s => `<option>${s}</option>`).join('');
+    selMes.innerHTML = FIN_MESES.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('');
+    // Abre no mês anterior: é o que normalmente está sendo lançado (conta chega depois).
+    const hoje = new Date();
+    selMes.value = hoje.getMonth() === 0 ? 12 : hoje.getMonth();
+    if (hoje.getMonth() === 0) selAno.value = hoje.getFullYear() - 1;
+  }
+  await finLanCarregarMes();
+  await finUgeCarregar();
+}
+
+function finLanErro(msg) {
+  const el = document.getElementById('finLanErro');
+  el.textContent = msg || '';
+  el.classList.toggle('hidden', !msg);
+}
+
+let finLanSel = {};  // seleção mostrada na tabela, para desfazer a troca se a pessoa cancelar
+async function finLanTrocar() {
+  const ids = { ano: 'finLanAno', sgb: 'finLanSgb', mes: 'finLanMes' };
+  const novo = Object.fromEntries(Object.entries(ids).map(([k, id]) => [k, document.getElementById(id).value]));
+  const trocouAno = novo.ano !== finLanSel.ano;
+  if ((finLanSujo || (trocouAno && finUgeSujo)) &&
+      !confirm('Há valores não salvos. Trocar mesmo assim e descartar?')) {
+    Object.entries(ids).forEach(([k, id]) => { document.getElementById(id).value = finLanSel[k]; });
+    return;
+  }
+  finLanSujo = false;
+  await finLanCarregarMes();
+  if (trocouAno) { finUgeSujo = false; await finUgeCarregar(); }
+}
+
+async function finLanCarregarMes() {
+  finLanErro('');
+  const est = finEstrutura;
+  const ano = document.getElementById('finLanAno').value;
+  const sgb = document.getElementById('finLanSgb').value;
+  const mes = document.getElementById('finLanMes').value;
+  finLanSel = { ano, sgb, mes };
+  let dados;
+  try { dados = await apiFetch(`/financas/lancamentos?ano=${ano}&sgb=${encodeURIComponent(sgb)}&mes=${mes}`); }
+  catch (e) { finLanErro('Não foi possível carregar o mês: ' + e.message); return; }
+
+  finLanOriginal = {};
+  let ultimo = null;
+  dados.itens.forEach(it => {
+    finLanOriginal[`${it.local_id}|${it.categoria}`] = finFmtCampo(it.valor);
+    if (!ultimo || it.atualizado_em > ultimo.atualizado_em) ultimo = it;
+  });
+
+  const locais = est.locais.filter(l => l.sgb === sgb);
+  document.getElementById('finLanHead').innerHTML =
+    `<tr class="text-gray-500 text-xs text-left border-b border-gray-800"><th class="py-2 pr-3">Posto / município</th>${
+      est.categorias.map(c => `<th class="pr-2 text-right font-medium">${c.rotulo}</th>`).join('')}<th class="pr-2 text-right">Total</th></tr>`;
+  document.getElementById('finLanBody').innerHTML = locais.map(l => `
+    <tr data-local="${l.id}">
+      <td class="py-2 pr-3 align-top">
+        <div class="text-gray-200 text-sm">${finEsc(l.nome)}</div>
+        ${l.observacao ? `<div class="text-gray-500 text-[11px] max-w-xs">${finEsc(l.observacao)}</div>` : ''}
+      </td>
+      ${est.categorias.map(c => {
+        const v = finLanOriginal[`${l.id}|${c.chave}`] ?? '';
+        return `<td class="pr-2 py-1.5"><input type="text" inputmode="decimal" data-cat="${c.chave}" value="${v}" placeholder="—"
+          oninput="finLanEditou(this)" class="input-field rounded px-2 py-1 text-sm text-right w-28"></td>`;
+      }).join('')}
+      <td class="pr-2 text-right text-gray-200 whitespace-nowrap font-medium" data-total></td>
+    </tr>`).join('') || `<tr><td class="py-4 text-gray-500 text-sm" colspan="9">Nenhum posto cadastrado para o ${sgb}.</td></tr>`;
+
+  finLanSujo = false;
+  finLanRecalcular();
+  document.getElementById('finLanStatus').textContent = ultimo
+    ? `Última alteração: ${finEsc(ultimo.atualizado_por || '—')}, ${new Date(ultimo.atualizado_em).toLocaleString('pt-BR')}`
+    : 'Mês ainda não lançado';
+}
+
+function finLanEditou(inp) {
+  const p = finParseValor(inp.value);
+  inp.classList.toggle('border-red-500', Number.isNaN(p));
+  const orig = finLanOriginal[`${inp.closest('tr').dataset.local}|${inp.dataset.cat}`] ?? '';
+  inp.classList.toggle('bg-amber-900/20', inp.value.trim() !== orig);
+  finLanSujo = true;
+  finLanRecalcular();
+}
+
+function finLanRecalcular() {
+  const est = finEstrutura;
+  const somaCat = Object.fromEntries(est.categorias.map(c => [c.chave, 0]));
+  let total = 0, preenchidas = 0, celulas = 0, invalidas = 0, mudou = false;
+  document.querySelectorAll('#finLanBody tr[data-local]').forEach(tr => {
+    let soma = 0;
+    tr.querySelectorAll('input[data-cat]').forEach(inp => {
+      celulas++;
+      const p = finParseValor(inp.value);
+      if (Number.isNaN(p)) { invalidas++; return; }
+      if (p !== null) preenchidas++;
+      if (typeof p === 'number') { soma += p; somaCat[inp.dataset.cat] += p; }
+      if (inp.value.trim() !== (finLanOriginal[`${tr.dataset.local}|${inp.dataset.cat}`] ?? '')) mudou = true;
+    });
+    tr.querySelector('[data-total]').textContent = finBRL(soma);
+    total += soma;
+  });
+  finLanSujo = mudou;
+  document.getElementById('finLanFoot').innerHTML = celulas ? `
+    <tr class="border-t border-gray-700 text-white font-semibold">
+      <td class="py-2 pr-3">Total do ${document.getElementById('finLanSgb').value} <span class="text-gray-500 text-xs font-normal">· ${preenchidas}/${celulas} lançadas</span></td>
+      ${est.categorias.map(c => `<td class="pr-2 text-right whitespace-nowrap text-sm">${finBRL(somaCat[c.chave])}</td>`).join('')}
+      <td class="pr-2 text-right whitespace-nowrap">${finBRL(total)}</td>
+    </tr>` : '';
+  const btn = document.getElementById('finLanSalvarBtn');
+  btn.disabled = !mudou || invalidas > 0;
+  btn.title = invalidas ? `${invalidas} valor(es) inválido(s) — corrija antes de salvar` : '';
+}
+
+async function finLanSalvar() {
+  const itens = [];
+  document.querySelectorAll('#finLanBody tr[data-local]').forEach(tr => {
+    tr.querySelectorAll('input[data-cat]').forEach(inp => {
+      const chave = `${tr.dataset.local}|${inp.dataset.cat}`;
+      if (inp.value.trim() === (finLanOriginal[chave] ?? '')) return;
+      const p = finParseValor(inp.value);
+      itens.push({ local_id: +tr.dataset.local, categoria: inp.dataset.cat, valor: p });
+    });
+  });
+  if (!itens.length) return;
+  const btn = document.getElementById('finLanSalvarBtn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const res = await fetch(API + '/financas/lancamentos', {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ ano: +document.getElementById('finLanAno').value,
+                             mes: +document.getElementById('finLanMes').value, itens }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `Erro ${res.status}`);
+    finInd = null;  // indicadores recarregam na próxima visita
+    await finLanCarregarMes();
+    document.getElementById('finLanStatus').textContent = `Salvo: ${itens.length} célula(s) alteradas.`;
+  } catch (e) {
+    finLanErro('Não foi possível salvar: ' + e.message);
+  } finally {
+    btn.textContent = 'Salvar mês';
+    finLanRecalcular();
+  }
+}
+
+// ------------------------------ Recursos da UGE ------------------------------
+async function finUgeCarregar() {
+  if (finUgeSujo && !confirm('Há recursos da UGE não salvos. Descartar?')) return;
+  const ano = document.getElementById('finLanAno').value;
+  try { finUgeItens = (await apiFetch(`/financas/recursos-uge?ano=${ano}`)).itens; }
+  catch (e) { finUgeItens = []; document.getElementById('finUgeStatus').textContent = 'Erro: ' + e.message; }
+  finUgeSujo = false;
+  finUgeDesenhar();
+}
+
+function finUgeDesenhar() {
+  const campo = 'input-field rounded px-2 py-1 text-sm w-full';
+  document.getElementById('finUgeBody').innerHTML = finUgeItens.map((it, i) => `
+    <tr>
+      <td class="py-1.5 pr-3 min-w-[240px]"><input class="${campo}" value="${finEsc(it.descricao)}" oninput="finUgeEditou(${i},'descricao',this.value)"></td>
+      <td class="pr-3"><input class="${campo} text-right" inputmode="decimal" value="${it.valor == null ? '' : finFmtCampo(it.valor)}" oninput="finUgeEditou(${i},'valorTxt',this.value)"></td>
+      <td class="pr-3"><select class="${campo}" onchange="finUgeEditou(${i},'fonte',this.value)">
+        <option value="">Selecione…</option>
+        ${finEstrutura.fontes_uge.map(f => `<option${f === it.fonte ? ' selected' : ''}>${f}</option>`).join('')}
+      </select></td>
+      <td><button onclick="finUgeRemover(${i})" title="Remover" class="text-gray-500 hover:text-red-400 px-2">✕</button></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="py-3 text-gray-500 text-sm">Nenhum recurso lançado neste ano.</td></tr>';
+  finUgeTotal();
+}
+
+function finUgeEditou(i, campo, valor) {
+  if (campo === 'valorTxt') finUgeItens[i].valor = finParseValor(valor);
+  else finUgeItens[i][campo] = valor;
+  finUgeSujo = true;
+  finUgeTotal();
+}
+
+function finUgeAdicionar() {
+  finUgeItens.push({ id: null, descricao: '', valor: null, fonte: '' });
+  finUgeSujo = true;
+  finUgeDesenhar();
+  document.querySelector('#finUgeBody tr:last-child input')?.focus();
+}
+
+function finUgeRemover(i) {
+  finUgeItens.splice(i, 1);
+  finUgeSujo = true;
+  finUgeDesenhar();
+}
+
+function finUgeTotal() {
+  const total = finUgeItens.reduce((a, it) => a + (typeof it.valor === 'number' && !Number.isNaN(it.valor) ? it.valor : 0), 0);
+  const invalido = finUgeItens.some(it => !String(it.descricao || '').trim() || !it.fonte || typeof it.valor !== 'number' || Number.isNaN(it.valor));
+  document.getElementById('finUgeFoot').innerHTML = `
+    <tr class="border-t border-gray-700 text-white font-semibold">
+      <td class="py-2 pr-3">Total</td><td class="pr-3 text-right whitespace-nowrap">${finBRL(total)}</td><td colspan="2"></td>
+    </tr>`;
+  const btn = document.getElementById('finUgeSalvarBtn');
+  btn.disabled = !finUgeSujo || invalido;
+  btn.title = invalido ? 'Toda linha precisa de item, valor e fonte pagadora' : '';
+}
+
+async function finUgeSalvar() {
+  const btn = document.getElementById('finUgeSalvarBtn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const res = await fetch(API + '/financas/recursos-uge', {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ ano: +document.getElementById('finLanAno').value,
+        itens: finUgeItens.map(it => ({ id: it.id, descricao: it.descricao.trim(), valor: it.valor, fonte: it.fonte })) }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : `Erro ${res.status}`);
+    finUgeSujo = false;
+    finInd = null;
+    await finUgeCarregar();
+    document.getElementById('finUgeStatus').textContent = 'Recursos salvos.';
+  } catch (e) {
+    document.getElementById('finUgeStatus').textContent = 'Não foi possível salvar: ' + e.message;
+  } finally {
+    btn.textContent = 'Salvar recursos';
   }
 }
 

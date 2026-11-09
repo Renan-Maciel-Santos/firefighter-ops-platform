@@ -111,7 +111,10 @@ flowchart LR
 - **One place per rule.** Access control lives only in
   [`webapp/acesso.py`](webapp/acesso.py): the backend enforces it and the
   frontend *receives* it from `/auth/me`, so hiding a menu item is a consequence,
-  not the protection. Unknown roles are denied by default. Staff classification
+  not the protection. Unknown roles are denied by default. Per-user overrides
+  (set by the admin on the Permissions tab) can only narrow or reshuffle staff
+  access, never grant admin tabs, and the discipline tab stays restricted to
+  officers and its own section whatever is ticked. Staff classification
   (which unit, front-line or administrative) lives only in
   [`webapp/efetivo_regras.py`](webapp/efetivo_regras.py), shared by the dashboard
   and the assistant, so they can never disagree.
