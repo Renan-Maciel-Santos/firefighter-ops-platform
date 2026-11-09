@@ -1605,6 +1605,47 @@ def consultar_resumo_operacional(
             frescor_texto = f"atualizado há {dias_atras} dias"
         data_texto = f"serviço de {data_servico.strftime('%d/%m/%Y')}"
 
+    # 09/11/2026 — um oficial perguntou ONDE estão os mergulhadores e QUEM
+    # são, e a B.I.A. só tinha o total. Por estação vem do próprio Mapa de
+    # Força; os nomes não existem lá (só a quantidade), então cruzamos quem
+    # está na escala da última captura do nível operacional com o curso
+    # CMAUT (mergulho autônomo) em b1.contato_militar. É cadastro de curso,
+    # não a marcação do Mapa — a contagem pode não bater, e a mensagem diz isso.
+    por_estacao = db.execute(text("""
+        SELECT bloco_nome AS sgb, estacao_nome AS estacao,
+               capacidade_agua_l AS agua_litros, mergulhadores
+        FROM b3.mapa_forca_estacao WHERE snapshot_id = :sid
+        ORDER BY bloco_nome, ordem
+    """), {"sid": sid["id"]}).mappings().all()
+
+    escalados = db.execute(text("""
+        WITH cap AS (SELECT id, capturado_em FROM b3.nivel_op_captura ORDER BY capturado_em DESC LIMIT 1)
+        SELECT DISTINCT ON (i.re)
+               i.re, i.posto, i.nome_guerra, v.estacao_nome AS estacao, v.us, v.status,
+               cap.capturado_em
+        FROM b3.nivel_op_integrante i
+        JOIN b3.nivel_op_viatura v ON v.id = i.viatura_id
+        JOIN cap ON cap.id = v.captura_id
+        JOIN b1.contato_militar m ON m.re = i.re
+        WHERE m.cursos ILIKE '%CMAUT%'
+        -- quem aparece em duas guarnições fica onde está operando, não na reserva
+        ORDER BY i.re, (v.status_grp = 'O') DESC, v.estacao_nome
+    """)).mappings().all()
+
+    POSTO = {"SUBTEN": "Subten", "1.SGT": "1º Sgt", "2.SGT": "2º Sgt", "3.SGT": "3º Sgt",
+             "CB": "Cb", "SD": "Sd", "1.TEN": "1º Ten", "2.TEN": "2º Ten", "CAP": "Cap"}
+    mergulhadores_nomes = sorted(
+        [{"re": r["re"], "posto": POSTO.get(r["posto"], r["posto"]), "nome_guerra": r["nome_guerra"],
+          "estacao": r["estacao"], "viatura": r["us"], "situacao_viatura": r["status"]} for r in escalados],
+        key=lambda x: (x["estacao"] or "", x["nome_guerra"] or ""))
+
+    com_merg = [e for e in por_estacao if (e["mergulhadores"] or 0) > 0]
+    linha_estacoes = ", ".join(f"{e['estacao']} {e['mergulhadores']}" for e in com_merg) or "nenhuma estação"
+    linha_nomes = "; ".join(
+        f"{m['posto']} {m['nome_guerra']} ({m['estacao']})" for m in mergulhadores_nomes
+    ) or "nenhum militar com curso CMAUT na escala"
+    hora_escala = escalados[0]["capturado_em"].astimezone().strftime("%H:%M") if escalados else None
+
     mensagem = (
         f"Mapa de Força ({frescor_texto} — {data_texto}): "
         f"{g['viaturas_operando']} operando, {g['viaturas_reserva']} reserva, {g['viaturas_baixadas']} baixada. "
@@ -1612,7 +1653,23 @@ def consultar_resumo_operacional(
         f"em {g['estacoes_total']} estações, {g['mergulhadores_total']} mergulhadores. "
         f"(água e mergulhadores são por estação, não por viatura)"
     )
+    # Detalhes em campos próprios: a `mensagem` é o que a B.I.A. repete para
+    # "quanto de água temos?", e não deve virar um relatório de 20 linhas.
+    # Para "onde" e "quem", ela usa estes.
+    detalhes = {
+        "mergulhadores_por_estacao_texto": f"Mergulhadores por estação (Mapa de Força): {linha_estacoes}.",
+        "agua_por_estacao_texto": "Água por estação (Mapa de Força): " + (", ".join(
+            f"{e['estacao']} {e['agua_litros']:,}L".replace(",", ".")
+            for e in por_estacao if e["agua_litros"]) or "sem registro") + ".",
+        "mergulhadores_nomes_texto": (
+            f"Militares com curso de mergulho (CMAUT) na escala de agora"
+            f"{f' ({hora_escala})' if hora_escala else ''}: {linha_nomes}. "
+            f"Fonte: cadastro de cursos cruzado com a escala do nível operacional — o Mapa de Força "
+            f"só traz a quantidade por estação, então o total pode não bater com ele."
+        ),
+    }
     return {
+        **detalhes,
         "snapshot": {"id": sid["id"],
                      "data_servico": data_servico.isoformat() if data_servico else None,
                      "capturado_em": sid["capturado_em"].isoformat()},
@@ -1621,5 +1678,7 @@ def consultar_resumo_operacional(
         "frescor": frescor_texto,
         "geral": g,
         "por_sgb": [dict(r) for r in por_sgb],
+        "por_estacao": [dict(r) for r in por_estacao],
+        "mergulhadores_na_escala": mergulhadores_nomes,
         "mensagem": mensagem,
     }

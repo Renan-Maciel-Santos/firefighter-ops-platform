@@ -39,7 +39,7 @@ rnd = random.Random(SEMENTE)
 HOJE = date.today()
 AGORA = datetime.now().replace(microsecond=0)
 
-SCHEMAS = ("app", "b1", "b3", "b4", "b5", "bia", "sjd", "uge")
+SCHEMAS = ("app", "b1", "b3", "b4", "b5", "bia", "financas", "sjd", "uge")
 
 # ==========================================
 # ESTRUTURA FICTÍCIA DO GRUPAMENTO
@@ -901,6 +901,121 @@ def carregar_app(cur, senha):
     return ids
 
 
+# ==========================================
+# 09/11/2026 — complementos de viaturas, mergulhadores e Finanças
+# ==========================================
+# RNG próprio: o `rnd` principal fica intacto e o resto da carga sai igual.
+rnd2 = random.Random(SEMENTE + 1)
+
+
+def carregar_historico_nivel_op(cur, frota):
+    """29 dias de capturas anteriores (uma por dia), só com a situação.
+
+    Alimenta a disponibilidade real da aba Viaturas e a linha do tempo de cada
+    viatura. A captura de hoje continua sendo a mais recente."""
+    vtrs = [v for v in frota if v["cod"]]
+    grp_de = {}
+    for v in vtrs:  # estado inicial, e depois cada dia pode mudar
+        grp_de[v["prefixo"]] = "B" if v["status"] != "OPERANDO" and rnd2.random() < 0.6 else "O"
+    n = 0
+    for d in range(29, 1, -1):
+        dia = HOJE - timedelta(days=d)
+        cur.execute("""INSERT INTO b3.nivel_op_captura (capturado_em, estacoes_lidas, viaturas_lidas, viaturas_numreg)
+                       VALUES (%s, %s, %s, %s) RETURNING id""",
+                    (datetime.combine(dia, time(7, 30)), len(ESTACOES), len(vtrs), len(vtrs)))
+        cid = cur.fetchone()[0]
+        linhas, ordem = [], {}
+        for v in vtrs:
+            g = grp_de[v["prefixo"]]
+            if v["status"] == "BAIXADA_DESCARGA":
+                g = "B"  # saindo da frota: baixada o tempo todo
+            elif g == "B" and rnd2.random() < 0.15:
+                g = "O"
+            elif g != "B" and rnd2.random() < 0.04:
+                g = "B"
+            elif g != "B":
+                g = "R" if rnd2.random() < 0.3 else "O"
+            grp_de[v["prefixo"]] = g
+            st = {"O": "DISPONÍVEL", "R": "RESERVA",
+                  "B": "PROC DESCARGA" if v["status"] == "BAIXADA_DESCARGA" else "BAIXA(DEFEITO)"}[g]
+            ordem[v["cod"]] = ordem.get(v["cod"], 0) + 1
+            us = v["prefixo"].replace("-", "")
+            ini = datetime.combine(dia, time(7, 30))
+            linhas.append((cid, v["cod"], v["nome"], ordem[v["cod"]], us, st, g, f"[{us}]", "RADIOPATRULHA", "6",
+                           v["prog"], "ATIV PREV OP TERRESTRE DIVERSA", ini, ini + timedelta(hours=24),
+                           "S", "S", "1", "0", None if g == "B" else us, 0))
+        execute_values(cur, """INSERT INTO b3.nivel_op_viatura (captura_id, opm_cod, estacao_nome, ordem, us, status,
+                         status_grp, componente, programa, programa_cod, modalidade, operacao, inicio, termino,
+                         exige_vtr, existe_vtr, cad_cod, ptrcpn_cod, viatura_prefixo, efetivo_qtd) VALUES %s""", linhas)
+        n += len(linhas)
+    print(f"  {'b3.nivel_op_viatura (histórico)':<34} {n:>6}")
+
+
+def carregar_contato_militar(cur, efetivo):
+    """Cadastro de cursos. Parte dos escalados de hoje tem CMAUT (mergulho
+    autônomo) — é por aqui que a B.I.A. responde quem são os mergulhadores."""
+    cur.execute("""SELECT DISTINCT i.re FROM b3.nivel_op_integrante i
+                   JOIN b3.nivel_op_viatura v ON v.id = i.viatura_id
+                   WHERE v.captura_id = (SELECT id FROM b3.nivel_op_captura ORDER BY capturado_em DESC LIMIT 1)""")
+    escalados = sorted(r[0] for r in cur.fetchall())
+    mergulhadores = set(rnd2.sample(escalados, min(18, len(escalados))))
+    outros = ["CSALT", "CAPH", "CBRES", "CMOT"]
+    linhas = []
+    for i, m in enumerate(efetivo):
+        if m["posto_grad"] not in PRACA_OP:
+            continue
+        cursos = [c for c in outros if rnd2.random() < 0.2]
+        if m["re"] in mergulhadores:
+            cursos.append("CMAUT")
+        linhas.append((m["re"], opm_texto(m["cod"]), m["nome"], fone_ficticio(i), ", ".join(cursos) or None,
+                       AGORA - timedelta(days=rnd2.randint(30, 900))))
+    ins(cur, "b1.contato_militar", ["re", "opm", "militar", "telefone", "cursos", "cadastrado_em"], linhas)
+
+
+# Faixa mensal fictícia (R$) por categoria, para um posto de bombeiro.
+FIN_FAIXA = {"tel": (150, 900), "agua": (200, 1800), "energia": (900, 7000), "combustivel": (4000, 26000),
+             "manutencao_frota": (1500, 30000), "alimentacao": (800, 9000), "outros": (0, 3500)}
+
+
+def carregar_financas(cur):
+    """Gastos das prefeituras por posto (um local por município de cada SGB),
+    do ano passado inteiro e do ano corrente até o mês anterior, e os recursos
+    geridos pela UGE com a fonte pagadora."""
+    locais = {}
+    for _cod, sgb, _pb, _nome, mun, *_ in ESTACOES:
+        locais.setdefault((sgb.replace("º", "°"), mun.title()), None)
+    ordem = {}
+    for (sgb, mun) in locais:
+        ordem[sgb] = ordem.get(sgb, 0) + 1
+        obs = "Prefeitura não fornece telefone" if rnd2.random() < 0.12 else None
+        cur.execute("INSERT INTO financas.locais (sgb, nome, ordem, observacao) VALUES (%s,%s,%s,%s) RETURNING id",
+                    (sgb, mun, ordem[sgb], obs))
+        locais[(sgb, mun)] = (cur.fetchone()[0], obs, rnd2.uniform(0.5, 1.6))
+    print(f"  {'financas.locais':<34} {len(locais):>6}")
+    linhas = []
+    meses = [(HOJE.year - 1, m) for m in range(1, 13)] + [(HOJE.year, m) for m in range(1, HOJE.month)]
+    for (sgb, _mun), (lid, obs, escala) in locais.items():
+        for ano, mes in meses:
+            # SGB que atrasa o lançamento: os últimos meses ficam em branco.
+            if sgb == "4°SGB" and (ano, mes) >= (HOJE.year, HOJE.month - 2):
+                continue
+            for cat, (lo, hi) in FIN_FAIXA.items():
+                if (cat == "tel" and obs) or rnd2.random() < 0.06:
+                    continue  # sem valor = célula em branco
+                linhas.append((ano, mes, lid, cat, round(rnd2.uniform(lo, hi) * escala, 2), "seed"))
+    ins(cur, "financas.gastos", ["ano", "mes", "local_id", "categoria", "valor", "atualizado_por"], linhas)
+    ITENS = [("Viatura ABS", "Emenda Parlamentar"), ("Desencarceradores", "TAC"),
+             ("Reforma do PB", "Prestação Pecuniária"), ("Conjuntos autônomos de ar", "FEPOM"),
+             ("Mangueiras e esguichos", "RINEM"), ("Diversos", "Tesouro"), ("Drone", "Doação"),
+             ("Bote inflável", "Emenda Parlamentar"), ("Uniformes operacionais", "Tesouro"),
+             ("Equipamento de mergulho", "TAC")]
+    uge = []
+    for ano in (HOJE.year - 1, HOJE.year):
+        for i, (item, fonte) in enumerate(rnd2.sample(ITENS, 8), 1):
+            uge.append((ano, item, round(rnd2.uniform(15000, 480000), 2), fonte, i, "seed"))
+    ins(cur, "financas.recursos_uge", ["ano", "descricao", "valor", "fonte", "ordem", "atualizado_por"], uge)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--recriar", action="store_true", help="apaga e recria os schemas antes da carga")
@@ -933,6 +1048,9 @@ def main():
     carregar_b5(cur, efetivo)
     carregar_uge(cur)
     carregar_sjd(cur)
+    carregar_historico_nivel_op(cur, frota)
+    carregar_contato_militar(cur, efetivo)
+    carregar_financas(cur)
     con.commit()
     print(f"\nPronto: {len(efetivo)} militares e {len(frota)} viaturas fictícios.")
     print("Login no painel: matrícula 900003 (admin) ou 900002 (oficial), senha", a.senha)

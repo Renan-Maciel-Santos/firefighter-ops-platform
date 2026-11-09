@@ -1,5 +1,5 @@
 -- ==========================================================================
--- Schema do painel (app, b1, b3, b4, b5, bia, sjd, uge) - SO ESTRUTURA.
+-- Schema do painel (app, b1, b3, b4, b5, bia, financas, sjd, uge) - SO ESTRUTURA.
 -- Gerado com pg_dump --schema-only a partir do banco real, sem nenhuma linha
 -- de dado e com os codigos de OPM trocados por ficticios (prefixo 99011).
 -- Aplicado pelo seed/gerar_dados_ficticios.py; as migracoes migra_*.sql de cada
@@ -134,7 +134,8 @@ CREATE TABLE app.usuarios (
     ativo boolean DEFAULT true NOT NULL,
     apelido_assinatura text,
     deve_trocar_senha boolean DEFAULT false NOT NULL,
-    secao text
+    secao text,
+    abas_personalizadas text[]
 );
 
 
@@ -3522,6 +3523,61 @@ ALTER TABLE ONLY uge.pendencia_baixas
 
 ALTER TABLE ONLY uge.pendencia_baixas
     ADD CONSTRAINT pendencia_baixas_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES app.usuarios(id) ON DELETE CASCADE;
+
+
+--
+-- Acrescentado à mão em 09/11/2026, junto com a seção Finanças e a resposta
+-- da B.I.A. sobre mergulhadores (mesma estrutura do banco real).
+--
+
+CREATE TABLE b1.contato_militar (
+    re integer NOT NULL,
+    opm text,
+    militar text,
+    telefone text,
+    cursos text,
+    cadastrado_em timestamp without time zone,
+    atualizado_em timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT contato_militar_pkey PRIMARY KEY (re)
+);
+
+CREATE SCHEMA financas;
+
+CREATE TABLE financas.locais (
+    id serial PRIMARY KEY,
+    sgb text NOT NULL CHECK (sgb IN ('1°SGB','2°SGB','3°SGB','4°SGB')),
+    nome text NOT NULL,
+    ordem integer NOT NULL DEFAULT 0,
+    observacao text,
+    ativo boolean NOT NULL DEFAULT true,
+    UNIQUE (sgb, nome)
+);
+
+CREATE TABLE financas.gastos (
+    ano integer NOT NULL CHECK (ano BETWEEN 2020 AND 2100),
+    mes integer NOT NULL CHECK (mes BETWEEN 1 AND 12),
+    local_id integer NOT NULL REFERENCES financas.locais(id),
+    categoria text NOT NULL CHECK (categoria IN
+        ('tel','agua','energia','combustivel','manutencao_frota','alimentacao','outros')),
+    valor numeric(14,2) NOT NULL,
+    atualizado_por text,
+    atualizado_em timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (ano, mes, local_id, categoria)
+);
+CREATE INDEX ix_fin_gastos_ano ON financas.gastos (ano);
+
+CREATE TABLE financas.recursos_uge (
+    id serial PRIMARY KEY,
+    ano integer NOT NULL,
+    descricao text NOT NULL,
+    valor numeric(14,2) NOT NULL,
+    fonte text CONSTRAINT recursos_uge_fonte_check CHECK (fonte IN
+        ('RINEM','Tesouro','Emenda Parlamentar','TAC','Prestação Pecuniária','FEPOM','Doação')),
+    ordem integer NOT NULL DEFAULT 0,
+    atualizado_por text,
+    atualizado_em timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_fin_uge_ano ON financas.recursos_uge (ano);
 
 
 --

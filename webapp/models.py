@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Enum as SAEnum
+from sqlalchemy.dialects.postgresql import ARRAY
 from database import Base
 import enum
 
@@ -36,3 +37,5 @@ class Usuario(Base):
     deve_trocar_senha = Column(Boolean, nullable=False, default=False)
     # Seção do EM que o praça enxerga. NULL para admin e oficial.
     secao = Column(String, nullable=True)
+    # Abas escolhidas pelo admin na aba Permissões. NULL = padrão da seção.
+    abas_personalizadas = Column(ARRAY(String), nullable=True)
