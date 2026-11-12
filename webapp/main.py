@@ -6,7 +6,7 @@ import os
 
 from database import engine, Base
 from models import Usuario  # noqa: F401  (registra o modelo no metadata)
-from routers import auth, viaturas, pessoal, ocorrencias, ppmq, saude, taf, mapa_forca, elogios, uge, etl_status, consulta, sjd, usuarios, auditoria_cobom, eap, financas
+from routers import auth, viaturas, pessoal, ocorrencias, ppmq, saude, taf, mapa_forca, elogios, uge, etl_status, consulta, sjd, usuarios, auditoria_cobom, eap, financas, afastamentos, militar
 
 app = FastAPI(title="11º GB — Sistema Interno", version="1.0.0", docs_url="/api/docs")
 
@@ -35,6 +35,8 @@ app.include_router(sjd.router)
 app.include_router(usuarios.router)
 app.include_router(auditoria_cobom.router)
 app.include_router(eap.router)
+app.include_router(afastamentos.router)
+app.include_router(militar.router)
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")

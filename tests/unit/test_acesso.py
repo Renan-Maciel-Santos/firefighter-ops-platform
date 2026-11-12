@@ -54,3 +54,10 @@ def test_perfil_desconhecido_nega_por_omissao(perfil):
 def test_toda_aba_de_secao_existe_no_painel():
     for abas in SECAO_ABAS.values():
         assert set(abas) <= set(ABAS)
+
+
+def test_paginas_do_b1_afastamentos_e_consulta():
+    # Páginas novas do B/1 (12/11/2026): padrão da seção B/1 e B/5, e só dela.
+    assert {"afastamentos", "consulta_militar"} <= set(abas_do_usuario("praca", "B/1 e B/5"))
+    assert "consulta_militar" not in abas_do_usuario("praca", "B/4")
+    assert "afastamentos" in abas_do_usuario("oficial", None)

@@ -1016,6 +1016,27 @@ def carregar_financas(cur):
     ins(cur, "financas.recursos_uge", ["ano", "descricao", "valor", "fonte", "ordem", "atualizado_por"], uge)
 
 
+def carregar_paf_seguinte(cur, efetivo):
+    """PAF do ano seguinte: em outubro a PM já lança as férias do próximo ano,
+    e a captura vai até 31/12 dele. ~92% do efetivo com dois períodos de 15
+    dias; o resto fica sem lançamento (como no SGP de verdade)."""
+    ano = HOJE.year + 1
+    linhas = []
+    for m in efetivo:
+        if rnd2.random() < 0.08:
+            continue
+        ini1 = date(ano, rnd2.randint(1, 6), rnd2.randint(1, 28))
+        ini2 = date(ano, rnd2.randint(7, 12), rnd2.randint(1, 16))
+        for ini in (ini1, ini2):
+            linhas.append((m["re"], opm_texto(m["cod"]), "FERIAS", "RELATORIO_SGP", ini, ini + timedelta(days=14), 15,
+                           HOJE - timedelta(days=rnd2.randint(5, 30)), f"PAF - {ano}", m["posto_grad"], m["nome"],
+                           m["quadro"], "ATIVO", AGORA, None))
+    ins(cur, "b1.afastamentos",
+        ["re", "opm", "motivo", "origem_informacao", "data_inicio", "data_fim", "quantidade_dias",
+         "dt_cadastro", "observacao", "posto_grad", "nome", "quadro", "condicao", "atualizado_em",
+         "ausente_no_sgp_desde"], linhas)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--recriar", action="store_true", help="apaga e recria os schemas antes da carga")
@@ -1051,6 +1072,7 @@ def main():
     carregar_historico_nivel_op(cur, frota)
     carregar_contato_militar(cur, efetivo)
     carregar_financas(cur)
+    carregar_paf_seguinte(cur, efetivo)
     con.commit()
     print(f"\nPronto: {len(efetivo)} militares e {len(frota)} viaturas fictícios.")
     print("Login no painel: matrícula 900003 (admin) ou 900002 (oficial), senha", a.senha)

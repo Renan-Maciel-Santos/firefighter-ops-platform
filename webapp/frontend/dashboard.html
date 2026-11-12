@@ -63,6 +63,14 @@
       <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       Pessoal
     </button>
+    <button onclick="showTab('afastamentos')" data-tab="afastamentos" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Afastamentos
+    </button>
+    <button onclick="showTab('consulta_militar')" data-tab="consulta_militar" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      Consulta de militar
+    </button>
     <button onclick="showTab('saude')" data-tab="saude" class="nav-item w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 font-medium" data-perfis="comando,administrativo">
       <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
       Saúde (SIGS)
@@ -459,8 +467,8 @@
         </div>
       </div>
 
-      <!-- QPO por Lotação + Força Operacional + Efetivo Operacional -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+      <!-- QPO por Lotação + Força Operacional + Força Administrativa + Efetivo Operacional -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="card rounded-xl overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">QPO por Lotação</div>
           <div class="overflow-x-auto">
@@ -499,17 +507,20 @@
           </div>
         </div>
         <div class="card rounded-xl overflow-hidden">
-          <div class="px-4 py-3 border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">Efetivo Operacional por Lotação</div>
+          <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-2">
+            <span class="text-gray-400 text-xs uppercase tracking-wider">Força Administrativa por Lotação</span>
+            <span class="text-gray-600 text-xs" title="Vagas do QPO fora da atividade-fim: Comando, Adm e sede de Pelotão nos SGBs; no EM, tudo menos o COBOM e os Subten/Sgt da SAT. Existente: militares ativos que não são operacionais.">vagas administrativas</span>
+          </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead><tr class="border-b border-gray-800 text-gray-400 text-xs uppercase">
                 <th class="text-left px-4 py-2">Lotação</th>
                 <th class="text-right px-4 py-2">Vagas</th>
-                <th class="text-right px-4 py-2">Total</th>
-                <th class="text-right px-4 py-2">Operacional</th>
+                <th class="text-right px-4 py-2">Adm.</th>
+                <th class="text-right px-4 py-2">Claro</th>
                 <th class="text-right px-4 py-2">%</th>
               </tr></thead>
-              <tbody id="efetivOpeBody" class="divide-y divide-gray-800">
+              <tbody id="forcaAdmBody" class="divide-y divide-gray-800">
                 <tr><td colspan="5" class="px-4 py-4 text-center text-gray-600">Carregando...</td></tr>
               </tbody>
             </table>
@@ -517,74 +528,121 @@
         </div>
       </div>
 
-      <!-- Afastamentos -->
+      <!-- Administrativo acima do QPO: seção e círculo onde o existente passa das vagas, com os nomes -->
       <div class="card rounded-xl overflow-hidden mb-6">
-        <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-          <span class="text-gray-400 text-xs uppercase tracking-wider">Afastamentos Ativos</span>
-          <span id="afastamentosTotal" class="text-xs text-gray-500"></span>
+        <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-2">
+          <span class="text-gray-400 text-xs uppercase tracking-wider">Administrativo acima do QPO</span>
+          <span id="admAcimaTotal" class="text-xs text-gray-500"></span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead><tr class="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-              <th class="text-left px-4 py-3">RE</th>
-              <th class="text-left px-4 py-3">Nome</th>
-              <th class="text-left px-4 py-3">Posto/Grad</th>
-              <th class="text-left px-4 py-3">Lotação</th>
-              <th class="text-left px-4 py-3">Motivo</th>
-              <th class="text-left px-4 py-3">Início</th>
-              <th class="text-left px-4 py-3">Término</th>
-              <th class="text-right px-4 py-3">Dias</th>
+              <th class="text-left px-4 py-2">Lotação</th>
+              <th class="text-left px-4 py-2">Seção</th>
+              <th class="text-left px-4 py-2">Círculo</th>
+              <th class="text-right px-4 py-2">Vagas</th>
+              <th class="text-right px-4 py-2">Exist.</th>
+              <th class="text-right px-4 py-2">Acima</th>
+              <th class="text-left px-4 py-2">Militares</th>
             </tr></thead>
-            <tbody id="afastamentosBody" class="divide-y divide-gray-800">
-              <tr><td colspan="8" class="px-4 py-4 text-center text-gray-600">Carregando...</td></tr>
+            <tbody id="admAcimaBody" class="divide-y divide-gray-800">
+              <tr><td colspan="7" class="px-4 py-4 text-center text-gray-600">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Filtros Efetivo -->
-      <div class="card rounded-xl p-4 mb-4 flex flex-wrap gap-3 items-end">
+    </div>
+
+    <!-- ===== AFASTAMENTOS (B/1) ===== -->
+    <div id="tab-afastamentos" class="tab-panel">
+      <div class="flex flex-wrap items-end gap-3 mb-4">
         <div>
-          <label class="text-gray-400 text-xs block mb-1">Lotação</label>
-          <select id="filtroLotacao" class="input-field rounded-lg px-3 py-2 text-sm"><option value="">Todas</option></select>
+          <label class="block text-xs text-gray-500 mb-1">Ano</label>
+          <select id="afAno" onchange="afCarregar()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
         </div>
         <div>
-          <label class="text-gray-400 text-xs block mb-1">Posto/Grad</label>
-          <select id="filtroPosto" class="input-field rounded-lg px-3 py-2 text-sm"><option value="">Todos</option></select>
+          <label class="block text-xs text-gray-500 mb-1">Motivo</label>
+          <select id="afMotivo" onchange="afCarregar()" class="input-field rounded-lg px-3 py-2 text-sm"></select>
         </div>
-        <div>
-          <label class="text-gray-400 text-xs block mb-1">Buscar</label>
-          <input id="buscaEfetivo" type="text" placeholder="Nome ou RE" class="input-field rounded-lg px-3 py-2 text-sm w-48" />
+        <div class="text-xs text-gray-500 max-w-xl pb-1">
+          % = maior número de militares afastados <b class="text-gray-400">no mesmo dia</b> dentro do mês, sobre o efetivo atual —
+          a mesma régua das respostas da B.I.A. Licença-prêmio em pecúnia e afastamento sobrestado não contam.
         </div>
-        <button onclick="loadEfetivo(1)" class="px-4 py-2 rounded-lg text-sm text-white font-medium" style="background:#B22222">Filtrar</button>
-        <button onclick="resetFiltrosPessoal()" class="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500">Limpar</button>
       </div>
 
-      <!-- Tabela Efetivo -->
-      <div class="card rounded-xl overflow-hidden">
-        <div id="efetivLoading" class="flex items-center gap-2 text-gray-500 text-sm p-4">
-          <div class="w-4 h-4 border-2 border-gray-700 rounded-full spinner-sm"></div> Carregando...
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="card rounded-xl p-4">
+          <div class="text-gray-400 text-xs mb-1">Afastados hoje</div>
+          <div id="afHojeN" class="text-2xl font-bold text-white">—</div>
+          <div id="afHojeSub" class="text-xs text-gray-500"></div>
         </div>
-        <div id="efetivError" class="hidden text-red-400 text-sm p-4"></div>
-        <div id="efetivTableWrap" class="hidden overflow-x-auto">
+        <div class="card rounded-xl p-4">
+          <div class="text-gray-400 text-xs mb-1" id="afPicoRot">Pico do mês</div>
+          <div id="afPicoN" class="text-2xl font-bold text-yellow-400">—</div>
+          <div id="afPicoSub" class="text-xs text-gray-500"></div>
+        </div>
+        <div class="card rounded-xl p-4">
+          <div class="text-gray-400 text-xs mb-1" id="afNoMesRot">Com afastamento no mês</div>
+          <div id="afNoMesN" class="text-2xl font-bold text-blue-400">—</div>
+          <div class="text-xs text-gray-500">militares com ao menos um dia afastado</div>
+        </div>
+      </div>
+
+      <div class="card rounded-xl overflow-hidden mb-4">
+        <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between gap-2">
+          <span class="text-gray-400 text-xs uppercase tracking-wider">% do efetivo afastado por mês</span>
+          <span class="text-gray-600 text-xs">clique num mês para ver o pico e quantos tiveram afastamento</span>
+        </div>
+        <div class="overflow-x-auto">
           <table class="w-full text-sm">
-            <thead><tr class="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-              <th class="text-left px-4 py-3">RE</th>
-              <th class="text-left px-4 py-3">Nome</th>
-              <th class="text-left px-4 py-3">Posto/Grad</th>
-              <th class="text-left px-4 py-3">Lotação</th>
-            </tr></thead>
-            <tbody id="efetivBody" class="divide-y divide-gray-800"></tbody>
+            <thead id="afAnualHead"></thead>
+            <tbody id="afAnualBody" class="divide-y divide-gray-800">
+              <tr><td class="px-4 py-4 text-center text-gray-600">Carregando...</td></tr>
+            </tbody>
           </table>
         </div>
-        <div id="efetivPagination" class="hidden flex items-center justify-between px-4 py-3 border-t border-gray-800 text-sm text-gray-400">
-          <span id="efetivPagInfo"></span>
-          <div class="flex gap-2">
-            <button id="efetivPrevBtn" onclick="loadEfetivo(currentEPage-1)" class="px-3 py-1 rounded border border-gray-700 hover:border-gray-500">Anterior</button>
-            <button id="efetivNextBtn" onclick="loadEfetivo(currentEPage+1)" class="px-3 py-1 rounded border border-gray-700 hover:border-gray-500">Próximo</button>
+      </div>
+
+      <div class="mb-6">
+        <div class="card rounded-xl overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-800 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-gray-400 text-xs uppercase tracking-wider">Afastados no dia</span>
+            <div class="flex items-center gap-2">
+              <input id="afDia" type="date" onchange="afCarregarDia()" class="input-field rounded-lg px-2 py-1 text-xs" />
+              <input id="afDiaBusca" type="text" oninput="afDesenharDia()" placeholder="Filtrar nome, RE ou seção" class="input-field rounded-lg px-2 py-1 text-xs w-44" />
+            </div>
+          </div>
+          <div id="afDiaResumo" class="px-4 py-2 text-xs text-gray-500 border-b border-gray-800"></div>
+          <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="border-b border-gray-800 text-gray-400 text-xs uppercase">
+                <th class="text-left px-4 py-2">Militar</th>
+                <th class="text-left px-4 py-2">Lotação / seção</th>
+                <th class="text-left px-4 py-2">Motivo</th>
+                <th class="text-left px-4 py-2">Período</th>
+              </tr></thead>
+              <tbody id="afDiaBody" class="divide-y divide-gray-800"></tbody>
+            </table>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ===== CONSULTA DE MILITAR (B/1) ===== -->
+    <div id="tab-consulta_militar" class="tab-panel">
+      <div class="card rounded-xl p-4 mb-4">
+        <form onsubmit="event.preventDefault(); cmConsultar();" class="flex flex-wrap items-end gap-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">RE do militar</label>
+            <input id="cmRe" type="text" inputmode="numeric" autocomplete="off" placeholder="Ex.: 123456 ou 123456-7"
+                   class="input-field rounded-lg px-3 py-2 text-sm w-56" />
+          </div>
+          <button type="submit" class="bg-red-700 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg">Consultar</button>
+          <span class="text-xs text-gray-500 pb-2">Mostra só o militar do RE digitado.</span>
+        </form>
+      </div>
+      <div id="cmResultado"></div>
     </div>
 
     <!-- ===== SAÚDE ===== -->
@@ -2521,7 +2579,9 @@ function aplicarAbas() {
 const TAB_META = {
   ppmq:        { title: 'PPMQ', subtitle: 'Indicadores de Desempenho' },
   viaturas:    { title: 'Viaturas', subtitle: 'Situação da Frota' },
-  pessoal:     { title: 'Pessoal', subtitle: 'Gestão de Efetivo' },
+  pessoal:     { title: 'Pessoal', subtitle: 'QPO e forças por lotação' },
+  afastamentos: { title: 'Afastamentos', subtitle: '% do efetivo afastado e quem está afastado — B/1' },
+  consulta_militar: { title: 'Consulta de militar', subtitle: 'Dados de um militar pelo RE — B/1' },
   saude:       { title: 'Saúde (SIGS)', subtitle: 'Aptidão Médica' },
   taf:         { title: 'TAF (SITAF)', subtitle: 'Teste de Aptidão Física' },
   mapa:        { title: 'Mapa de Força', subtitle: 'Situação Operacional do Serviço' },
@@ -2555,6 +2615,8 @@ function showTab(name) {
   if (name === 'ppmq') loadPpmq();
   if (name === 'viaturas') { loadFiltros(); loadViaturas(1); loadResumoViaturas(); loadVtrComplementos(); }
   if (name === 'pessoal') loadPessoal();
+  if (name === 'afastamentos') loadAfastamentos();
+  if (name === 'consulta_militar') setTimeout(() => document.getElementById('cmRe').focus(), 50);
   if (name === 'saude') loadSaude();
   if (name === 'taf') loadTafModule();
   if (name === 'mapa') loadMapa();
@@ -2574,7 +2636,7 @@ function showTab(name) {
 // Find first accessible tab
 // Ordem em que as abas aparecem no menu — a primeira que a pessoa tem acesso
 // é a que abre. Praça de B/4 abre em Viaturas; de St UGE, em Processos.
-const ORDEM_ABAS = ['ppmq','viaturas','pessoal','saude','taf','mapa',
+const ORDEM_ABAS = ['ppmq','viaturas','pessoal','afastamentos','consulta_militar','saude','taf','mapa',
                     'ocorrencias','auditoria_cobom','eap','elogios','realocacao','fin_indicadores','fin_lancamento','uge','sjd','usuarios','permissoes'];
 
 async function iniciarPainel() {
@@ -3187,16 +3249,14 @@ async function vtrAbrirHist(prefixo) {
 }
 
 // ======================== PESSOAL ========================
-let currentEPage = 1;
-
 async function loadPessoal() {
   try {
-    const [resumo, lotacao, operacional, forca, afastamentos] = await Promise.all([
+    const [resumo, lotacao, forca, forcaAdm, admSecoes] = await Promise.all([
       apiFetch('/pessoal/resumo'),
       apiFetch('/pessoal/qpo-lotacao'),
-      apiFetch('/pessoal/operacional'),
       apiFetch('/pessoal/forca-operacional'),
-      apiFetch('/pessoal/afastamentos'),
+      apiFetch('/pessoal/forca-administrativa'),
+      apiFetch('/pessoal/forca-administrativa-secoes'),
     ]);
 
     document.getElementById('pVagas').textContent    = resumo.vagas_totais ?? '—';
@@ -3221,22 +3281,6 @@ async function loadPessoal() {
     // SAT, COBOM e ADM sao as tres partes do EM. Recuadas e rotuladas, para
     // ninguem ler "COBOM 100%" como se fosse um SGB inteiro.
     const PARTES_EM = { SAT: 'SAT', COBOM: 'COBOM', ADM: 'ADM' };
-    document.getElementById('efetivOpeBody').innerHTML = operacional.map(r => {
-      const pct = parseFloat(r.perc_operacional) || 0;
-      const cor = pct >= 80 ? 'text-green-400' : pct >= 60 ? 'text-yellow-400' : 'text-red-400';
-      const parte = PARTES_EM[r.lotacao];
-      const total = r.lotacao === 'TOTAL GERAL';
-      const rotulo = parte
-        ? `<span class="text-gray-600 mr-1">└</span><span class="text-gray-300">EM · ${parte}</span>`
-        : `<span class="text-white">${r.lotacao}</span>`;
-      return `<tr class="table-row${total ? ' font-semibold' : ''}">
-        <td class="px-4 py-2 font-medium ${parte ? 'pl-8' : ''}">${rotulo}</td>
-        <td class="px-4 py-2 text-right text-gray-500">${r.vagas ?? '—'}</td>
-        <td class="px-4 py-2 text-right text-gray-300">${r.total_ativos}</td>
-        <td class="px-4 py-2 text-right text-gray-300">${r.total_operacional}</td>
-        <td class="px-4 py-2 text-right font-semibold ${cor}">${pct.toFixed(1)}%</td>
-      </tr>`;
-    }).join('');
 
     // Forca operacional: operacionais sobre as VAGAS de atividade-fim do QPO, e
     // nao sobre o efetivo como o card ao lado. E aqui que uma vaga nova aparece.
@@ -3261,89 +3305,257 @@ async function loadPessoal() {
       </tr>`;
     }).join('');
 
-    const MOTIVO_BADGE = {
-      'FERIAS':            'bg-blue-900/50 text-blue-300',
-      'LICENCA-PREMIO':    'bg-purple-900/50 text-purple-300',
-      'DISPENSA DO SERVICO': 'bg-gray-800 text-gray-300',
-    };
-    document.getElementById('afastamentosTotal').textContent =
-      `${afastamentos.total} registro${afastamentos.total !== 1 ? 's' : ''}`;
-    document.getElementById('afastamentosBody').innerHTML = afastamentos.data.length
-      ? afastamentos.data.map(r => {
-          const badge = MOTIVO_BADGE[r.motivo] || 'bg-gray-800 text-gray-400';
-          return `<tr class="table-row">
-            <td class="px-4 py-2.5 font-mono text-gray-400">${r.re ?? '—'}</td>
-            <td class="px-4 py-2.5 text-white">${r.nome ?? '—'}</td>
-            <td class="px-4 py-2.5 text-gray-300">${r.posto_grad ?? '—'}</td>
-            <td class="px-4 py-2.5 text-gray-300">${r.lotacao ?? '—'}</td>
-            <td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${badge}">${r.motivo}</span></td>
-            <td class="px-4 py-2.5 text-gray-300">${fmtDate(r.data_inicio)}</td>
-            <td class="px-4 py-2.5 text-gray-300">${fmtDate(r.data_fim)}</td>
-            <td class="px-4 py-2.5 text-right text-gray-400">${r.quantidade_dias ?? '—'}</td>
+    // Forca administrativa: espelho do card acima, com as vagas que NAO sao de
+    // atividade-fim contra os militares que nao sao operacionais (pedido do Maj).
+    // O EM · ADM abre por secao (B/1, B/3, B/4, UGE...), que e onde se le o excesso.
+    const admClaro = c => c < 0
+      ? `<span class="text-blue-400">${-c} acima</span>`
+      : `<span class="text-yellow-400">${c}</span>`;
+    const admPct = (a, v) => v ? (100 * a / v) : null;
+    const admCor = p => p == null ? 'text-gray-500' : p >= 80 ? 'text-green-400' : p >= 60 ? 'text-yellow-400' : 'text-red-400';
+    const secoesEm = (admSecoes.secoes || []).filter(s => s.lotacao === 'ADM');
+    document.getElementById('forcaAdmBody').innerHTML = forcaAdm.map(r => {
+      const pct = r.perc_ocupacao;
+      const parte = PARTES_EM[r.lotacao];
+      const total = r.lotacao === 'TOTAL GERAL';
+      const rotulo = parte
+        ? `<span class="text-gray-600 mr-1">└</span><span class="text-gray-300">EM · ${parte}</span>`
+        : `<span class="text-white">${r.lotacao}</span>`;
+      let html = `<tr class="table-row${total ? ' font-semibold' : ''}">
+        <td class="px-4 py-2 font-medium ${parte ? 'pl-8' : ''}">${rotulo}</td>
+        <td class="px-4 py-2 text-right text-gray-500">${r.vagas_administrativas}</td>
+        <td class="px-4 py-2 text-right text-gray-300">${r.administrativo}</td>
+        <td class="px-4 py-2 text-right">${admClaro(r.claro)}</td>
+        <td class="px-4 py-2 text-right font-semibold ${admCor(pct)}">${pct == null ? '—' : pct.toFixed(1) + '%'}</td>
+      </tr>`;
+      if (r.lotacao === 'ADM') {
+        html += secoesEm.map(s => {
+          const p = admPct(s.existente, s.vagas);
+          return `<tr class="table-row text-xs">
+            <td class="px-4 py-1.5 pl-14 text-gray-400"><span class="text-gray-700 mr-1">·</span>${s.secao}</td>
+            <td class="px-4 py-1.5 text-right text-gray-600">${s.vagas}</td>
+            <td class="px-4 py-1.5 text-right text-gray-400">${s.existente}</td>
+            <td class="px-4 py-1.5 text-right">${admClaro(s.claro)}</td>
+            <td class="px-4 py-1.5 text-right ${admCor(p)}">${p == null ? '—' : p.toFixed(0) + '%'}</td>
           </tr>`;
-        }).join('')
-      : '<tr><td colspan="8" class="px-4 py-6 text-center text-gray-600">Nenhum afastamento ativo</td></tr>';
+        }).join('');
+      }
+      return html;
+    }).join('');
+
+    // Onde o administrativo passa do QPO: secao e circulo, com quem esta la.
+    // O painel nao escolhe quem "sobra" — lista todos da celula.
+    const LOT_ROT = l => ({ ADM: 'EM', SAT: 'EM · SAT' }[l] || l);
+    const acima = admSecoes.acima || [];
+    document.getElementById('admAcimaTotal').textContent = acima.length
+      ? `${admSecoes.total_excesso} acima do QPO em ${acima.length} seção(ões)/círculo(s)` : '';
+    document.getElementById('admAcimaBody').innerHTML = acima.length
+      ? acima.map(a => `<tr class="table-row align-top">
+          <td class="px-4 py-2 text-white whitespace-nowrap">${LOT_ROT(a.lotacao)}</td>
+          <td class="px-4 py-2 text-gray-300 whitespace-nowrap">${a.secao}</td>
+          <td class="px-4 py-2 text-gray-400 whitespace-nowrap">${a.circulo}</td>
+          <td class="px-4 py-2 text-right text-gray-500">${a.vagas}</td>
+          <td class="px-4 py-2 text-right text-gray-300">${a.existente}</td>
+          <td class="px-4 py-2 text-right text-blue-400 font-semibold">+${a.excesso}</td>
+          <td class="px-4 py-2 text-gray-300 text-xs leading-5">${a.militares.map(m =>
+            `<span class="whitespace-nowrap">${m.posto_grad} ${m.nome} <span class="text-gray-600 font-mono">${m.re}</span></span>`).join('<br>')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-600">Nenhuma seção acima do QPO</td></tr>';
+
   } catch (e) {
     console.error('Pessoal resumo:', e);
   }
-
-  const filtros = await apiFetch('/pessoal/filtros').catch(() => null);
-  if (filtros) {
-    populateSelect('filtroLotacao', filtros.lotacoes);
-    populateSelect('filtroPosto', filtros.postos);
-  }
-  loadEfetivo(1);
 }
 
-async function loadEfetivo(page = 1) {
-  currentEPage = page;
-  const loading = document.getElementById('efetivLoading');
-  const wrap    = document.getElementById('efetivTableWrap');
-  const errEl   = document.getElementById('efetivError');
-  const pag     = document.getElementById('efetivPagination');
-  loading.classList.remove('hidden'); wrap.classList.add('hidden');
-  errEl.classList.add('hidden'); pag.classList.add('hidden');
+// ======================== AFASTAMENTOS (B/1) ========================
+// Backend: routers/afastamentos.py. % = pico no mesmo dia / efetivo (régua da B.I.A.).
+const AF_MESES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const AF_PARTES_EM = { SAT: 'SAT', COBOM: 'COBOM', ADM: 'ADM' };
+const afEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const afPctTxt = v => v == null ? '—' : v.toFixed(1).replace('.', ',') + '%';
+// Fundo proporcional ao %: só para o olho achar os meses carregados, sem alerta.
+const afFundo = v => v == null ? '' : `background: rgba(96,165,250,${Math.min(0.04 + v / 90, 0.35).toFixed(2)})`;
+let afMesSel = null, afDiaDados = null, afIniciado = false;
+// Data local (toISOString é UTC: depois das 21h em Brasília já seria amanhã).
+const afHojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
-  const lotacao = document.getElementById('filtroLotacao').value;
-  const posto   = document.getElementById('filtroPosto').value;
-  const busca   = document.getElementById('buscaEfetivo').value.trim();
-  let url = `/pessoal/efetivo?page=${page}&limit=50`;
-  if (lotacao) url += `&lotacao=${encodeURIComponent(lotacao)}`;
-  if (posto)   url += `&posto_grad=${encodeURIComponent(posto)}`;
-  if (busca)   url += `&busca=${encodeURIComponent(busca)}`;
-
-  try {
-    const data = await apiFetch(url);
-    document.getElementById('efetivBody').innerHTML = data.data.length
-      ? data.data.map(r => `<tr class="table-row">
-          <td class="px-4 py-2.5 font-mono text-gray-400">${r.re}</td>
-          <td class="px-4 py-2.5 text-white">${r.nome}</td>
-          <td class="px-4 py-2.5 text-gray-300">${r.posto_grad ?? '—'}</td>
-          <td class="px-4 py-2.5 text-gray-300">${r.lotacao ?? '—'}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-600">Nenhum resultado</td></tr>';
-
-    loading.classList.add('hidden'); wrap.classList.remove('hidden');
-    const totalPages = Math.ceil(data.total / 50);
-    if (totalPages > 1) {
-      document.getElementById('efetivPagInfo').textContent = `Página ${page} de ${totalPages} (${data.total} registros)`;
-      document.getElementById('efetivPrevBtn').disabled = page <= 1;
-      document.getElementById('efetivNextBtn').disabled = page >= totalPages;
-      pag.classList.remove('hidden');
-    }
-  } catch (e) {
-    console.error(e);
-    loading.classList.add('hidden');
-    errEl.textContent = 'Dados indisponíveis. Tente novamente em instantes.';
-    errEl.classList.remove('hidden');
-  }
+function afRotulo(lot) {
+  const p = AF_PARTES_EM[lot];
+  if (lot === 'TOTAL') return '<span class="text-white font-semibold">TOTAL GERAL</span>';
+  return p ? `<span class="text-gray-600 mr-1">└</span><span class="text-gray-300">EM · ${p}</span>`
+           : `<span class="text-white">${afEsc(lot)}</span>`;
 }
 
-function resetFiltrosPessoal() {
-  document.getElementById('filtroLotacao').value = '';
-  document.getElementById('filtroPosto').value = '';
-  document.getElementById('buscaEfetivo').value = '';
-  loadEfetivo(1);
+async function loadAfastamentos() {
+  if (!afIniciado) {
+    const hoje = new Date();
+    const anoSel = document.getElementById('afAno');
+    anoSel.innerHTML = [hoje.getFullYear() + 1, hoje.getFullYear(), hoje.getFullYear() - 1]
+      .map(a => `<option ${a === hoje.getFullYear() ? 'selected' : ''}>${a}</option>`).join('');
+    try {
+      const motivos = await apiFetch('/afastamentos/motivos');
+      document.getElementById('afMotivo').innerHTML = motivos.map(m => `<option value="${m.id}">${afEsc(m.rotulo)}</option>`).join('');
+    } catch (e) { console.error(e); }
+    document.getElementById('afDia').value = afHojeIso();
+    afMesSel = hoje.getMonth() + 1;
+    afIniciado = true;
+  }
+  afCarregar();
+  afCarregarDia();
+}
+
+function afCarregar() {
+  const ano = +document.getElementById('afAno').value;
+  const hoje = new Date();
+  if (ano !== hoje.getFullYear() && !afMesSel) afMesSel = 1;
+  afCarregarAnual();
+  afCarregarMes();
+}
+
+async function afCarregarAnual() {
+  const ano = document.getElementById('afAno').value, motivo = document.getElementById('afMotivo').value || 'todos';
+  document.getElementById('afAnualBody').innerHTML = '<tr><td class="px-4 py-4 text-center text-gray-600">Calculando o ano...</td></tr>';
+  let d;
+  try { d = await apiFetch(`/afastamentos/anual?ano=${ano}&motivo=${motivo}`); }
+  catch (e) { document.getElementById('afAnualBody').innerHTML = `<tr><td class="px-4 py-4 text-red-400">${afEsc(e.message)}</td></tr>`; return; }
+  const aa = String(d.ano).slice(2);
+  document.getElementById('afAnualHead').innerHTML = `<tr class="border-b border-gray-800 text-gray-400 text-xs uppercase">
+    <th class="text-left px-4 py-2">Lotação</th><th class="text-right px-3 py-2">Efetivo</th>
+    ${AF_MESES.map((m, i) => `<th class="text-center px-2 py-2 cursor-pointer hover:text-white ${i + 1 === afMesSel ? 'text-white' : ''}"
+      onclick="afSelecionarMes(${i + 1})">${m}/${aa}</th>`).join('')}</tr>`;
+  document.getElementById('afAnualBody').innerHTML = d.linhas.map(l => {
+    const total = l.lotacao === 'TOTAL';
+    return `<tr class="table-row ${total ? 'font-semibold' : ''}">
+      <td class="px-4 py-2 whitespace-nowrap ${AF_PARTES_EM[l.lotacao] ? 'pl-8' : ''}">${afRotulo(l.lotacao)}</td>
+      <td class="px-3 py-2 text-right text-gray-500">${l.efetivo}</td>
+      ${l.meses.map(m => `<td class="px-2 py-2 text-center cursor-pointer ${m.mes === afMesSel ? 'ring-1 ring-inset ring-gray-500' : ''}"
+          style="${afFundo(m.pct)}" title="${m.pico} de ${l.efetivo} no mesmo dia" onclick="afSelecionarMes(${m.mes})">
+          <span class="text-gray-200">${afPctTxt(m.pct)}</span></td>`).join('')}
+    </tr>`;
+  }).join('');
+}
+
+function afSelecionarMes(mes) {
+  afMesSel = mes;
+  afCarregarAnual();
+  afCarregarMes();
+}
+
+async function afCarregarMes() {
+  const ano = document.getElementById('afAno').value, motivo = document.getElementById('afMotivo').value || 'todos';
+  const mes = afMesSel || (new Date().getMonth() + 1);
+  const rot = `${AF_MESES[mes - 1]}/${String(ano).slice(2)}`;
+  document.getElementById('afPicoRot').textContent = `Pico de ${rot}`;
+  document.getElementById('afNoMesRot').textContent = `Com afastamento em ${rot}`;
+  let d;
+  try { d = await apiFetch(`/afastamentos/mes?ano=${ano}&mes=${mes}&motivo=${motivo}`); }
+  catch (e) { document.getElementById('afPicoSub').textContent = e.message; return; }
+  document.getElementById('afPicoN').textContent = afPctTxt(d.total.pct);
+  document.getElementById('afPicoSub').textContent = `${d.total.pico} de ${d.total.efetivo} afastados no mesmo dia`;
+  document.getElementById('afNoMesN').textContent = d.total.no_mes;
+}
+
+const AF_GRUPO_COR = { ferias: 'bg-blue-900/50 text-blue-300', lp: 'bg-purple-900/50 text-purple-300',
+                       dispensa: 'bg-gray-800 text-gray-300', saude: 'bg-red-900/40 text-red-300', outros: 'bg-amber-900/40 text-amber-300' };
+
+async function afCarregarDia() {
+  const dia = document.getElementById('afDia').value, motivo = document.getElementById('afMotivo').value || 'todos';
+  try { afDiaDados = await apiFetch(`/afastamentos/dia?data=${dia}&motivo=${motivo}`); }
+  catch (e) { document.getElementById('afDiaBody').innerHTML = `<tr><td colspan="4" class="px-4 py-4 text-red-400">${afEsc(e.message)}</td></tr>`; return; }
+  const hojeIso = afHojeIso();
+  if (dia === hojeIso) {
+    document.getElementById('afHojeN').textContent = afDiaDados.total;
+    document.getElementById('afHojeSub').textContent = `${afPctTxt(afDiaDados.pct)} do efetivo (${afDiaDados.efetivo})`;
+  }
+  afDesenharDia();
+}
+
+function afDesenharDia() {
+  const d = afDiaDados;
+  if (!d) return;
+  const q = document.getElementById('afDiaBusca').value.trim().toLowerCase();
+  const lista = d.lista.filter(r => !q || `${r.nome} ${r.re} ${r.secao} ${r.lotacao}`.toLowerCase().includes(q));
+  document.getElementById('afDiaResumo').innerHTML =
+    `<b class="text-gray-300">${d.total}</b> afastados (${afPctTxt(d.pct)} do efetivo) — ` +
+    Object.entries(d.por_grupo).map(([g, n]) => `${afEsc(g)} ${n}`).join(' · ');
+  document.getElementById('afDiaBody').innerHTML = lista.length ? lista.map(r => `<tr class="table-row">
+      <td class="px-4 py-2"><div class="text-white">${afEsc(r.posto_grad)} ${afEsc(r.nome)}</div>
+        <div class="text-gray-600 text-xs font-mono">RE ${r.re}</div></td>
+      <td class="px-4 py-2 text-gray-300 text-xs"><div>${afEsc(r.lotacao)}</div><div class="text-gray-500">${afEsc(r.secao)}</div></td>
+      <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${AF_GRUPO_COR[r.grupo] || ''}">${afEsc(r.motivo)}</span></td>
+      <td class="px-4 py-2 text-gray-300 text-xs whitespace-nowrap">${fmtDate(r.data_inicio)} a ${fmtDate(r.data_fim)}
+        <span class="text-gray-600">(${r.quantidade_dias ?? '?'} d)</span></td>
+    </tr>`).join('')
+    : '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-600">Ninguém afastado</td></tr>';
+}
+
+// ======================== CONSULTA DE MILITAR (B/1) ========================
+// Backend: routers/militar.py. Saúde e TAF só vêm para quem enxerga essas abas.
+async function cmConsultar() {
+  const re = document.getElementById('cmRe').value.trim();
+  const out = document.getElementById('cmResultado');
+  if (!re) return;
+  out.innerHTML = '<div class="text-gray-500 text-sm">Consultando...</div>';
+  let d;
+  try { d = await apiFetch(`/militar/${encodeURIComponent(re)}`); }
+  catch (e) { out.innerHTML = `<div class="card rounded-xl p-4 text-yellow-400 text-sm">${afEsc(e.message)}</div>`; return; }
+  const m = d.militar;
+  const linha = (rot, val) => val ? `<div class="flex gap-3 py-1.5 border-b border-gray-800/60 text-sm">
+      <div class="w-40 flex-shrink-0 text-gray-500">${rot}</div><div class="text-gray-200">${val}</div></div>` : '';
+  const periodo = a => `${fmtDate(a.data_inicio)} a ${fmtDate(a.data_fim)} <span class="text-gray-600">(${a.quantidade_dias ?? '?'} d)</span>`;
+  const listaAf = (tit, xs, vazio) => `<div class="mb-3"><div class="text-xs text-gray-500 uppercase tracking-wider mb-1">${tit}</div>
+      ${xs.length ? xs.map(a => `<div class="text-sm py-1 flex flex-wrap gap-x-3">
+        <span class="text-gray-200">${afEsc(a.motivo)}</span><span class="text-gray-400">${periodo(a)}</span>
+        ${a.observacao ? `<span class="text-gray-600 text-xs">${afEsc(a.observacao)}</span>` : ''}</div>`).join('')
+        : `<div class="text-gray-600 text-sm">${vazio}</div>`}</div>`;
+  const lotRot = AF_PARTES_EM[m.lotacao] ? `EM · ${m.lotacao}` : m.lotacao;
+  const s = d.saude;
+  out.innerHTML = `
+    <div class="card rounded-xl p-5 mb-4">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div class="text-xl font-bold text-white">${afEsc(m.posto_grad)} ${afEsc(m.nome)}</div>
+          <div class="text-gray-400 text-sm mt-0.5">RE ${m.re}${m.re_dv != null ? '-' + m.re_dv : ''}
+            ${d.nome_guerra ? ` · nome de guerra <b class="text-gray-200">${afEsc(d.nome_guerra)}</b>` : ''}</div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${m.ativo ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}">${m.ativo ? 'ATIVO' : 'INATIVO / TRANSFERIDO'}</span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-800 text-gray-300">${m.operacional ? 'Operacional' : 'Administrativo'}</span>
+          ${d.afastamentos.atuais.length ? `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-900/50 text-amber-300">AFASTADO HOJE</span>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="card rounded-xl p-4">
+        <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Cadastro e lotação</div>
+        ${linha('Lotação', `${afEsc(lotRot)} — ${afEsc(m.opm_atual)}`)}
+        ${linha('OPM efetiva', afEsc(m.opm_efetiva))}
+        ${linha('Quadro / situação', `${afEsc(m.quadro || '—')} · ${afEsc(m.situacao || '—')}`)}
+        ${linha('Admissão', m.data_admissao ? `${fmtDate(m.data_admissao)} (${afEsc(m.tempo_servico)})` : '')}
+        ${linha('Promoção atual', d.antiguidade?.data_promocao_atual ? `${fmtDate(d.antiguidade.data_promocao_atual)}${d.antiguidade.ordem_geral ? ` · antiguidade nº ${d.antiguidade.ordem_geral}` : ''}` : '')}
+        ${linha('Telefone', afEsc(d.contato?.telefone))}
+        ${linha('Cursos', afEsc(d.contato?.cursos))}
+        ${linha('Escala agora', d.escala_agora ? `${afEsc(d.escala_agora.us)} — ${afEsc(d.escala_agora.estacao_nome)} (${afEsc(d.escala_agora.status)})` : '<span class="text-gray-600">não está na escala da última captura</span>')}
+      </div>
+      <div class="card rounded-xl p-4">
+        <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Afastamentos</div>
+        ${listaAf('Hoje', d.afastamentos.atuais, 'Não está afastado hoje.')}
+        ${listaAf('Próximos', d.afastamentos.proximos, 'Nada programado no SGP.')}
+        ${listaAf('Últimos', d.afastamentos.anteriores, '—')}
+      </div>
+      ${s ? `<div class="card rounded-xl p-4">
+        <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">Saúde</div>
+        ${linha('IAS', `<b>${afEsc(s.ias_situacao)}</b>${s.ias?.data_validade ? ` — validade ${fmtDate(s.ias.data_validade)}` : ''}`)}
+        <div class="text-xs text-gray-500 uppercase tracking-wider mt-3 mb-1">Restrições vigentes</div>
+        ${s.restricoes.length ? s.restricoes.map(r => `<div class="text-sm py-1"><span class="text-gray-200">${afEsc(r.observacao || r.restricao_medica)}</span>
+          <span class="text-gray-500 text-xs"> ${afEsc(r.origem || '')} · ${fmtDate(r.data_inicial)} a ${r.data_final ? fmtDate(r.data_final) : 'indeterminado'}</span></div>`).join('')
+          : '<div class="text-gray-600 text-sm">Sem restrições vigentes.</div>'}
+      </div>` : ''}
+      ${d.taf ? `<div class="card rounded-xl p-4">
+        <div class="text-gray-400 text-xs uppercase tracking-wider mb-2">TAF</div>
+        <div class="text-sm text-gray-200 whitespace-pre-line">${afEsc(d.taf.texto)}</div>
+      </div>` : ''}
+    </div>`;
 }
 
 // ======================== SAÚDE ========================
@@ -3522,6 +3734,10 @@ function resetFiltrosTaf() {
 
 function fmtDate(d) {
   if (!d) return '—';
+  // Data pura do backend ("2026-11-01"): o Date() lê como meia-noite UTC e, em
+  // Brasília, mostrava o dia anterior (31/10). Formata direto, sem fuso.
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d));
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return new Date(d).toLocaleDateString('pt-BR');
 }
 
@@ -4126,7 +4342,8 @@ const USR_PERFIL_COR = {
 // Nomes das abas para leitura humana. Só rótulo — quem decide acesso é o
 // backend, em webapp/acesso.py.
 const USR_ABA_NOME = {
-  ppmq: 'PPMQ', viaturas: 'Viaturas', pessoal: 'Pessoal', saude: 'Saúde',
+  ppmq: 'PPMQ', viaturas: 'Viaturas', pessoal: 'Pessoal', afastamentos: 'Afastamentos',
+  consulta_militar: 'Consulta de militar', saude: 'Saúde',
   taf: 'TAF', mapa: 'Mapa de Força', ocorrencias: 'Ocorrências', auditoria_cobom: 'Auditoria COBOM', eap: 'EAP',
   elogios: 'Elogios', realocacao: 'Realocação', uge: 'Processos',
   fin_indicadores: 'Custos por SGB', fin_lancamento: 'Lançamento de gastos',

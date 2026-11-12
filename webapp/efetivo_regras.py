@@ -88,3 +88,51 @@ SQL_VAGA_OPERACIONAL = """
         WHEN secao ILIKE '%Ativ T%'   THEN posto_grad = 'Subten/Sgt'
         ELSE false END
 """
+
+
+# Seção do ADMINISTRATIVO, nos dois lados (pedido do Maj em 11/11/2026: onde o
+# administrativo está acima do QPO e quem são). Só faz sentido para militar
+# não operacional e vaga não operacional — o resto é atividade-fim.
+#   - EM: cada OPM da sede tem a sua seção no QPO. Agência de Área tem vagas
+#     "a designar" no QPO, que não contam como vaga; quem estiver lá aparece
+#     acima. SEC SDM ATIV TEC (990119100) é a Chefia da Seção Adm (1 Cap).
+#   - SGB: o código terminado em 000 (sede do SGB) e o 800 (ADM do SGB) somam
+#     "Comando" e "Adm" do QPO; o terminado em N00 é a sede do Nº Pelotão.
+# Os rótulos são os mesmos dos dois lados, para cruzar vaga e militar.
+SQL_SECAO_ADM = f"""
+    CASE WHEN {_EH_SAT}                                     THEN 'SAT'
+         WHEN cod_opm_atual = 990110000                     THEN 'Comando'
+         WHEN cod_opm_atual = 990119100                     THEN 'Chefia da Seção Adm'
+         WHEN cod_opm_atual = 990119110                     THEN 'B/1 e B/5'
+         WHEN cod_opm_atual = 990119120                     THEN 'Agência de Área'
+         WHEN cod_opm_atual = 990119130                     THEN 'B/3, PJMD e Motomec'
+         WHEN cod_opm_atual = 990119140                     THEN 'B/4'
+         WHEN cod_opm_atual = 990119160                     THEN 'St UGE'
+         WHEN right(cod_opm_atual::text, 3) IN ('000','800') THEN 'Sede do SGB (Cmdo e Adm)'
+         WHEN right(cod_opm_atual::text, 2) = '00'
+              THEN substr(cod_opm_atual::text, 7, 1) || 'º Pelotão (sede)'
+         ELSE opm_atual END
+"""
+
+SQL_SECAO_ADM_QPO = """
+    CASE WHEN lotacao = 'EM' AND secao = 'Comando'          THEN 'Comando'
+         WHEN lotacao = 'EM' AND secao ILIKE '%Ativ T%'     THEN 'SAT'
+         WHEN lotacao = 'EM' AND COALESCE(subsecao, '') = '' THEN 'Chefia da Seção Adm'
+         WHEN lotacao = 'EM' AND subsecao ILIKE 'Agência%'  THEN 'Agência de Área'
+         WHEN lotacao = 'EM'                                THEN subsecao
+         WHEN secao IN ('Comando', 'Adm')                   THEN 'Sede do SGB (Cmdo e Adm)'
+         ELSE left(secao, 2) || ' Pelotão (sede)' END
+"""
+
+# Círculo do posto, igual nos dois lados: o QPO já agrupa assim.
+SQL_CIRCULO = """
+    CASE WHEN posto_grad ~ '(TEN|CAP|MAJ|CEL)' AND posto_grad !~ 'SUBTEN' THEN 'Oficiais'
+         WHEN posto_grad ~ '(SUBTEN|SGT)'                                 THEN 'Subten/Sgt'
+         ELSE 'Cb/Sd' END
+"""
+
+SQL_CIRCULO_QPO = """
+    CASE WHEN posto_grad = 'Subten/Sgt' THEN 'Subten/Sgt'
+         WHEN posto_grad = 'Cb/Sd'      THEN 'Cb/Sd'
+         ELSE 'Oficiais' END
+"""
