@@ -253,7 +253,13 @@ def main():
     # futuro se o relatório de fato trouxe afastamentos futuros: um arquivo baixado
     # à mão com data fim = hoje faria toda a programação do P1 "sumir" de uma vez.
     tem_futuro = any(l["data_inicio"] > data_relatorio for l in linhas)
-    fim_janela = date(data_relatorio.year, 12, 31) if tem_futuro else data_relatorio
+    # Acima: Desde 11/11/2026 a captura vai até 31/12 do ano seguinte (PAF do próximo
+    # ano). Mesma cautela: só estende a conferência até lá se o relatório trouxe algo
+    # do ano seguinte; um arquivo antigo, pedido só até 31/12 deste ano, não pode dar
+    # por sumido o PAF inteiro do próximo ano.
+    tem_ano_seguinte = any(l["data_inicio"].year > data_relatorio.year for l in linhas)
+    fim_janela = (date(data_relatorio.year + 1, 12, 31) if tem_ano_seguinte
+                  else date(data_relatorio.year, 12, 31) if tem_futuro else data_relatorio)
     if not tem_futuro:
         print("ℹ️  Relatório sem afastamento futuro: ausências conferidas só até "
               f"{data_relatorio:%d/%m/%Y}.")

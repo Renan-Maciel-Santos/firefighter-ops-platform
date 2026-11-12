@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Optional
-import os, re, sys
+import calendar, os, re, sys
+from datetime import date
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -384,8 +385,16 @@ def consultar_militar(
         filtros.append("re = :re")
         params["re"] = re
     if nome:
-        filtros.append("nome ILIKE :nome")
-        params["nome"] = f"%{nome}%"
+        # Palavra por palavra, em qualquer ordem e sem acento. Antes era um
+        # ILIKE do texto inteiro: em 10/11/2026 "Fulana Souza" não achou
+        # FULANA DE TAL SOUZA (o sobrenome do meio quebra o trecho
+        # contínuo), deu 404 e a B.I.A. respondeu "não consegui consultar".
+        palavras = nome.split()[:6]
+        for i, p in enumerate(palavras):
+            filtros.append(f"unaccent(nome) ILIKE unaccent(:nome{i})")
+            params[f"nome{i}"] = f"%{p}%"
+        if not palavras:
+            raise HTTPException(status_code=400, detail="Informe 're' ou 'nome'")
 
     where = " AND ".join(filtros)
     rows = db.execute(text(f"""
@@ -1682,3 +1691,284 @@ def consultar_resumo_operacional(
         "mergulhadores_na_escala": mergulhadores_nomes,
         "mensagem": mensagem,
     }
+
+
+# ==========================================
+# FÉRIAS (PAF — plano anual de férias)
+# ==========================================
+# 11/11/2026 — o Maj perguntou do PAF 2027 e a B.I.A. não tinha ferramenta de
+# férias. A fonte é b1.afastamentos (relatório do SGP), que desde 11/11/2026 é
+# capturado até 31/12 do ano seguinte: em outubro a PM já lança o PAF do próximo
+# ano. Só motivo FERIAS, só o que ainda está no SGP e só quem está na unidade.
+
+# Posto abreviado como se escreve no WhatsApp ("1. SGT PM" -> "1º Sgt").
+_ROTULO_POSTO = {"TEN CEL PM": "Ten Cel", "MAJ PM": "Maj", "CAP PM": "Cap", "1. TEN PM": "1º Ten",
+                 "2. TEN PM": "2º Ten", "ASP OF PM": "Asp Of", "SUBTEN PM": "Subten",
+                 "1. SGT PM": "1º Sgt", "2. SGT PM": "2º Sgt", "3. SGT PM": "3º Sgt",
+                 "CB PM": "Cb", "SD PM": "Sd"}
+
+_MESES_PT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+             "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
+
+def _fmt_d(d):
+    return d.strftime("%d/%m/%Y") if d else "—"
+
+
+_SUFIXOS_NOME = {"JUNIOR", "JÚNIOR", "FILHO", "NETO", "SOBRINHO", "SEGUNDO"}
+_PARTICULAS = {"DA", "DE", "DO", "DAS", "DOS", "E"}
+
+
+def _nome_titulo(nome: str) -> str:
+    return " ".join(w.lower() if w in _PARTICULAS else w.capitalize() for w in (nome or "").split())
+
+
+def _nome_curto(nome: str) -> str:
+    """'JOAO CARLOS DE OLIVEIRA PRADO' -> 'Joao Prado';
+    'PEDRO HENRIQUE DA COSTA JUNIOR' -> 'Pedro Costa Junior'."""
+    p = [w for w in (nome or "").split() if w not in _PARTICULAS]
+    if len(p) <= 2:
+        return _nome_titulo(" ".join(p))
+    ult = p[-2:] if p[-1] in _SUFIXOS_NOME else p[-1:]
+    return _nome_titulo(" ".join([p[0]] + ult))
+
+
+def _mil_curto(m) -> str:
+    return f"{_ROTULO_POSTO.get(m['posto_grad'], m['posto_grad'])} {_nome_curto(m['nome'])}"
+
+
+def _lot_curta(lot: str) -> str:
+    """'2°Sgb' -> '2º SGB'."""
+    return re.sub(r"^(\d)\s*[°º]?\s*sgb$", r"\1º SGB", lot or "", flags=re.I)
+
+
+def _periodo_curto(p) -> str:
+    """01–10/01 no mesmo mês; 28/06 a 07/07 quando vira o mês."""
+    a, b = p["data_inicio"], p["data_fim"] or p["data_inicio"]
+    if (a.month, a.year) == (b.month, b.year):
+        return f"{a:%d} a {b:%d/%m}"
+    return f"{a:%d/%m} a {b:%d/%m}"
+
+
+# Posto dito junto do nome ("Sgt Silva", "1º Sgt Silva", "cabo Souza"). Sem
+# separar, "Sgt" entrava na busca do nome e não achava ninguém (11/11/2026).
+_POSTO_PALAVRA = {
+    "sd": "SD", "soldado": "SD", "cb": "CB", "cabo": "CB",
+    "sgt": "SGT", "sargento": "SGT", "subten": "SUBTEN", "subtenente": "SUBTEN",
+    "ten": "TEN", "tenente": "TEN", "cap": "CAP", "capitao": "CAP", "capitão": "CAP",
+    "maj": "MAJ", "major": "MAJ", "cel": "CEL", "coronel": "CEL",
+}
+
+
+def _separar_posto(nome: str):
+    """'1º Sgt Silva' -> (['Silva'], regex do posto_grad ou None)."""
+    resto, posto, ordinal = [], None, None
+    for w in nome.split():
+        chave = w.lower().strip(".,")
+        m = re.fullmatch(r"([123])[º°oª.]?", chave)
+        if m and posto is None:
+            ordinal = m.group(1)
+            continue
+        if chave in _POSTO_PALAVRA and posto is None:
+            posto = _POSTO_PALAVRA[chave]
+            continue
+        if chave == "pm":
+            continue
+        resto.append(w)
+    if posto is None:
+        return resto, None
+    if posto in ("SGT", "TEN"):
+        return resto, rf"^{ordinal or '[123]'}\. {posto} PM$"
+    return resto, rf"^{posto} PM$"
+
+
+@router.get("/ferias")
+def consultar_ferias(
+    _=Depends(verificar_token),
+    re_: Optional[int] = Query(None, alias="re", description="RE do militar. Opcional."),
+    nome: Optional[str] = Query(None, description="Nome ou parte do nome do militar. Opcional."),
+    ano: Optional[int] = Query(None, description="Ano do PAF (ex.: 2027). Vazio: ano corrente; mês que já passou vai para o ano seguinte; militar sem ano traz as próximas férias."),
+    mes: Optional[int] = Query(None, ge=1, le=12, description="Mês (1-12): lista quem está de férias nele."),
+    lotacao: Optional[str] = Query(None, description="1º SGB, 2º SGB, 3º SGB, 4º SGB ou EM. Opcional."),
+    db: Session = Depends(get_db),
+):
+    """
+    Férias programadas no SGP (PAF).
+    - Com re/nome: os períodos de férias do militar no ano.
+    - Com mes: quem está de férias naquele mês, por lotação.
+    - Sem nada: panorama do ano — quantos de férias em cada mês, por lotação.
+    """
+    hoje = date.today()
+    ano_informado = ano is not None
+    if not ano:
+        # Mês que já passou neste ano = o do ano que vem ("julho", dito em
+        # novembro, é julho do PAF seguinte).
+        ano = hoje.year + 1 if mes and mes < hoje.month else hoje.year
+    ini_ano, fim_ano = date(ano, 1, 1), date(ano, 12, 31)
+
+    filtros = ["e.ativo = true", "a.motivo = 'FERIAS'", "a.ausente_no_sgp_desde IS NULL",
+               "a.data_inicio <= :fim", "COALESCE(a.data_fim, a.data_inicio) >= :ini"]
+    params: dict = {"ini": ini_ano, "fim": fim_ano}
+    rotulo = []
+    if lotacao:
+        alvo = _resolver_lotacao(lotacao)
+        if not alvo:
+            return {"total": 0, "mensagem": f"Comandante, não reconheci a lotação '{lotacao}'. Use 1, 2, 3, 4 ou EM."}
+        filtros.append("e.lotacao = :lotacao")
+        params["lotacao"] = alvo
+        rotulo.append(alvo)
+    if re_:
+        filtros.append("e.re = :re")
+        params["re"] = re_
+    elif nome:
+        palavras, posto_re = _separar_posto(nome)
+        for i, p in enumerate(palavras[:6]):
+            filtros.append(f"unaccent(e.nome) ILIKE unaccent(:nome{i})")
+            params[f"nome{i}"] = f"%{p}%"
+        if posto_re:
+            filtros.append("e.posto_grad ~ :posto_re")
+            params["posto_re"] = posto_re
+        if not palavras:
+            return {"total": 0, "mensagem": "Comandante, informe o nome do militar além do posto."}
+        if not ano_informado and not mes:
+            # Militar sem ano: as próximas férias, de hoje até o fim do PAF seguinte.
+            params["ini"], params["fim"] = hoje, date(hoje.year + 1, 12, 31)
+    if mes:
+        params["ini"] = date(ano, mes, 1)
+        params["fim"] = date(ano, mes, calendar.monthrange(ano, mes)[1])
+
+    rows = db.execute(text(f"""
+        SELECT DISTINCT e.re, e.posto_grad, e.nome, e.lotacao,
+               a.data_inicio, a.data_fim, a.quantidade_dias, a.observacao
+        FROM b1.afastamentos a
+        JOIN b1.vw_efetivo_classificado e ON e.re = a.re
+        WHERE {' AND '.join(filtros)}
+        ORDER BY e.lotacao, e.nome, a.data_inicio
+    """), params).mappings().all()
+    lista = [dict(r) for r in rows]
+
+    # Até onde o SGP foi lido: sem isso "ninguém de férias em 2027" pode ser só
+    # falta de captura, e o Comandante precisa saber a diferença.
+    ultimo = db.execute(text("""
+        SELECT MAX(data_inicio) FROM b1.afastamentos
+        WHERE motivo = 'FERIAS' AND ausente_no_sgp_desde IS NULL
+    """)).scalar()
+    aviso = ""
+    if ano > hoje.year and (not ultimo or ultimo.year < ano):
+        aviso = (f"\n⚠️ O SGP ainda não trouxe férias de {ano} para o painel — o PAF de {ano} "
+                 f"pode não estar lançado ou não ter sido capturado ainda.")
+
+    alvo_txt = f" — {', '.join(_lot_curta(r) for r in rotulo)}" if rotulo else ""
+
+    # 1) Militar específico
+    if re_ or nome:
+        if not lista:
+            return {"total": 0, "lista": [],
+                    "mensagem": f"Nenhuma férias encontrada para '{re_ or nome}' no SGP "
+                                f"({'em ' + str(ano) if ano_informado else 'de hoje até 31/12/' + str(hoje.year + 1)}).{aviso}"}
+        por_mil = {}
+        for m in lista:
+            por_mil.setdefault(m["re"], []).append(m)
+        if len(por_mil) > 5:
+            # Nome completo aqui: o curto pode esconder justo o nome buscado.
+            nomes = [f"• {_ROTULO_POSTO.get(p[0]['posto_grad'], p[0]['posto_grad'])} {_nome_titulo(p[0]['nome'])}"
+                     f" — RE {r}, {_lot_curta(p[0]['lotacao'])}"
+                     for r, p in list(por_mil.items())[:15]]
+            mais = f"\n…e mais {len(por_mil) - 15}." if len(por_mil) > 15 else ""
+            return {"total": len(por_mil), "ambiguo": True, "lista": lista,
+                    "mensagem": f"Encontrei {len(por_mil)} militares com '{nome}'. Qual deles?\n\n"
+                                + "\n".join(nomes) + mais}
+        periodo_txt = (f"Férias {ano}" if ano_informado or mes
+                       else f"Próximas férias (até 31/12/{hoje.year + 1})")
+        blocos = []
+        for _re, per in list(por_mil.items())[:5]:
+            m = per[0]
+            linhas = [f"• {_fmt_d(p['data_inicio'])} a {_fmt_d(p['data_fim'])} ({p['quantidade_dias'] or '?'} dias)"
+                      for p in per]
+            blocos.append(f"🏖️ *{_ROTULO_POSTO.get(m['posto_grad'], m['posto_grad'])} {_nome_titulo(m['nome'])}*\n"
+                          f"RE {m['re']} — {_lot_curta(m['lotacao'])}\n\n{periodo_txt}:\n" + "\n".join(linhas))
+        return {"total": len(lista), "lista": lista, "mensagem": "\n\n".join(blocos) + aviso}
+
+    # 2) Mês específico: quem está de férias, um por linha, por lotação
+    if mes:
+        por_lot = {}
+        for m in lista:
+            por_lot.setdefault(m["lotacao"], {}).setdefault(m["re"], []).append(m)
+        partes = []
+        for lot in sorted(por_lot):
+            mil = sorted(por_lot[lot].values(), key=lambda ps: ps[0]["data_inicio"])
+            linhas = [f"• {_mil_curto(ps[0])} — " + " e ".join(_periodo_curto(x) for x in ps) for ps in mil]
+            sub = "" if len(por_lot) == 1 and rotulo else f"*{_lot_curta(lot)}* ({len(mil)})\n"
+            partes.append(sub + "\n".join(linhas))
+        n = len({m["re"] for m in lista})
+        efetivo = db.execute(text(f"""
+            SELECT COUNT(*) FROM b1.vw_efetivo_classificado e
+            WHERE e.ativo = true {'AND e.lotacao = :lotacao' if 'lotacao' in params else ''}
+        """), {k: v for k, v in params.items() if k == "lotacao"}).scalar() or 0
+        # Mesma régua do panorama: o maior número de militares de férias no mesmo dia.
+        dias = [date(ano, mes, d) for d in range(1, calendar.monthrange(ano, mes)[1] + 1)]
+        pico = max((len({m["re"] for m in lista
+                         if m["data_inicio"] <= d <= (m["data_fim"] or m["data_inicio"])}) for d in dias), default=0)
+        p_ef = str(round(100 * pico / efetivo, 1) if efetivo else 0.0).replace(".", ",")
+        cab = (f"🏖️ *De férias em {_MESES_PT[mes - 1]}/{ano}{alvo_txt}*\n"
+               f"{p_ef}% do efetivo ({pico} de {efetivo} no mesmo dia)\n{n} militar(es) com férias no mês")
+        return {"total": n, "lista": lista,
+                "mensagem": cab + ("\n\n" + "\n\n".join(partes) if partes else "") + aviso}
+
+    # 3) Panorama do ano: % do EFETIVO de férias em cada mês, no PICO — o maior
+    # número de militares de férias no MESMO DIA dentro do mês.
+    # 11/11/2026: a 1ª versão dava a fatia dos dias de férias do ano que caía em
+    # cada mês (soma 100%), mas o Comando controla "não mais de 10% do efetivo
+    # de férias no mês". Contar quem tem QUALQUER dia no mês não serve para isso:
+    # com dois períodos de 15 dias cada militar aparece em 2-3 meses e todo mês
+    # passa de 16%. O pico diário é a medida padronizada (pedido do Comando).
+    efetivo_lot = {r["lotacao"]: r["n"] for r in db.execute(text(f"""
+        SELECT e.lotacao, COUNT(*) AS n FROM b1.vw_efetivo_classificado e
+        WHERE e.ativo = true {'AND e.lotacao = :lotacao' if 'lotacao' in params else ''}
+        GROUP BY e.lotacao
+    """), {k: v for k, v in params.items() if k == "lotacao"}).mappings().all()}
+    efetivo = sum(efetivo_lot.values())
+
+    # Militares de férias em cada dia do ano (um militar conta uma vez por dia,
+    # mesmo com dois períodos colados).
+    por_dia = {}
+    for m in lista:
+        d0 = max(m["data_inicio"], ini_ano)
+        d1 = min(m["data_fim"] or m["data_inicio"], fim_ano)
+        while d0 <= d1:
+            por_dia.setdefault(d0, set()).add(m["re"])
+            d0 = date.fromordinal(d0.toordinal() + 1)
+
+    def pct_txt(n, tot):
+        return (str(round(100 * n / tot, 1)) if tot else "0.0").replace(".", ",") + "%"
+
+    aa = str(ano)[2:]
+    meses = []
+    for mm in range(1, 13):
+        dias = [date(ano, mm, d) for d in range(1, calendar.monthrange(ano, mm)[1] + 1)]
+        pico = max((len(por_dia.get(d, ())) for d in dias), default=0)
+        meses.append({"mes": mm, "pico_mesmo_dia": pico,
+                      "pct_efetivo": round(100 * pico / efetivo, 1) if efetivo else 0.0})
+    militares = len({m["re"] for m in lista})
+
+    linhas_mes = "\n".join(
+        f"{_MESES_PT[x['mes'] - 1][:3].upper()}/{aa} - {pct_txt(x['pico_mesmo_dia'], efetivo)} "
+        f"({x['pico_mesmo_dia']} de {efetivo})"
+        for x in meses)
+
+    por_lot = {}
+    for m in lista:
+        por_lot.setdefault(m["lotacao"], set()).add(m["re"])
+    linhas_lot = [f"• {_lot_curta(lot)}: {len(por_lot.get(lot, ()))} de {efetivo_lot[lot]} com PAF"
+                  for lot in sorted(efetivo_lot)]
+
+    hoje_txt = ""
+    if ano == hoje.year:
+        n_hoje = len(por_dia.get(hoje, ()))
+        hoje_txt = f"\n\nDe férias hoje: {n_hoje} ({pct_txt(n_hoje, efetivo)} do efetivo)."
+    mensagem = (f"🏖️ *PAF {ano}{alvo_txt}*\n{militares} de {efetivo} militares com férias no SGP"
+                + (f"\n\n*Efetivo de férias por mês*\n_(maior número no mesmo dia)_\n{linhas_mes}" if lista else "")
+                + ("\n\n*Por lotação*\n" + "\n".join(linhas_lot) if lista and len(efetivo_lot) > 1 else "")
+                + hoje_txt + aviso)
+    return {"total": militares, "efetivo": efetivo, "periodos": len(lista), "por_mes": meses,
+            "por_lotacao": {k: len(v) for k, v in por_lot.items()}, "mensagem": mensagem}

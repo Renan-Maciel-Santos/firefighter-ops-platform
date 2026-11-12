@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Leave page (B/1).** Share of personnel on leave per month by sub-command, measured as the peak number away on the same day over headcount, plus who is on leave on a given day. Replaces the leave table that sat at the bottom of the personnel tab.
+- **Personnel lookup by service number.** Shows one member only; health and fitness data appear only to users who can already see those tabs.
+- **Administrative strength.** Administrative vacancies vs. administrative staff per unit, the HQ split by section, and a list of where staffing exceeds the establishment.
+- **Vacation plan in the assistant.** `/consulta/ferias` answers the yearly vacation plan (including next year's, captured up to 31/12 of the following year), by month, unit or person.
+
+### Fixed
+
+- Name lookup in the assistant matches word by word, accent-insensitive, with the rank allowed in the query ("Sgt Silva").
+- Dates without time were shown one day early in the dashboard (UTC parsing).
+- The WhatsApp watchdog waits before reconnecting a closed session and restarts the gateway on duplicate-socket conflicts instead of creating them.
+
 - **Finance section.** Monthly cost of each sub-command (SGB) from what the municipalities pay per station (phone, water, power, fuel, fleet maintenance, food, other), with a monthly entry form and the procurement unit's own funds by paying source. Replaces a shared Google Sheet.
 - **Per-user permissions.** The admin picks the tabs each staff member sees on a new Permissions tab (`app.usuarios.abas_personalizadas`; NULL keeps the section default). The discipline tab stays restricted to officers and its own section.
 - **Fleet indicators.** Real availability from the CAD snapshots, use vs. age, maintenance and fuel cost per vehicle, incomplete records and a status timeline per vehicle. The fleet tab is split into Indicators and Fleet list.

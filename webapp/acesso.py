@@ -24,7 +24,7 @@ B.I.A. no WhatsApp.
 # Abas do painel. A chave é a mesma usada no `data-tab` do dashboard.html e no
 # `showTab()`; se divergir, o menu aparece e o dado não vem.
 ABAS = (
-    "ppmq", "viaturas", "pessoal", "saude", "taf", "mapa",
+    "ppmq", "viaturas", "pessoal", "afastamentos", "consulta_militar", "saude", "taf", "mapa",
     "ocorrencias", "auditoria_cobom", "eap", "elogios", "realocacao", "uge", "fin_indicadores", "fin_lancamento", "sjd",
     "usuarios", "permissoes",
 )
@@ -48,7 +48,7 @@ ABAS_ATRIBUIVEIS = tuple(a for a in ABAS if a not in ABAS_SO_ADMIN)
 #
 # SAT fica vazia porque a aba dela ainda não existe ("Em breve" no menu).
 SECAO_ABAS = {
-    "B/1 e B/5":           ("pessoal", "realocacao", "saude", "taf", "elogios"),
+    "B/1 e B/5":           ("pessoal", "afastamentos", "consulta_militar", "realocacao", "saude", "taf", "elogios"),
     "B/3, PJMD e Motomec": ("mapa", "ocorrencias", "auditoria_cobom", "eap", "ppmq"),
     "B/4":                 ("viaturas",),
     "St UGE":              ("uge", "fin_indicadores", "fin_lancamento"),

@@ -24,6 +24,9 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+-- Busca de militar por nome sem acento (consulta.py, militar.py). Acrescentado em 12/11/2026.
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
+
 --
 -- Name: app; Type: SCHEMA; Schema: -; Owner: -
 --

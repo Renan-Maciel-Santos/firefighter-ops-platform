@@ -154,7 +154,15 @@ LIMITE_FRESCOR_H = {
     "restricoes":     14,
     "afastamentos":   14,
     "mapa_forca":      8,
-    "b4_viaturas":    48,
+    # Planilha da Motomec fora do lote desde 22/10/2026 (ver rodar_etl_arquivos.py):
+    # quem atualiza a frota agora é o SIOPM, vigiado nos dois domínios abaixo. Cobrar
+    # 48h da planilha seria alarme permanente; ela só roda à mão.
+    "b4_viaturas":    None,
+    # 11GB_Nivel_Operacional, todo dia às 08:00: captura do mapa de força no SIOPM
+    # (b3_nivel_operacional) e, em seguida, status/estação em b4.viaturas
+    # (b4_viaturas_siopm). 30h tolera um dia perdido e acusa dois.
+    "b3_nivel_operacional": 30,
+    "b4_viaturas_siopm":    30,
     "sjd":            48,
     # Backup diário às 20:45. 30h tolera um dia perdido — máquina desligada,
     # rede caída — e acusa dois. Backup que para de rodar em silêncio é igual
@@ -174,8 +182,9 @@ LIMITE_FRESCOR_H = {
 # Scheduler e no log, e indo para lugar nenhum.
 TAREFAS_ETL = {
     "11GB_Captura_SGP":  "efetivo, IAS, restrições e afastamentos",
-    "11GB_ETL_Arquivos": "viaturas, NBI, UGE e SJD",
+    "11GB_ETL_Arquivos": "NBI, UGE e SJD",
     "11GB_MapaForca":    "mapa de força",
+    "11GB_Nivel_Operacional": "nível operacional do SIOPM e status/estação das viaturas",
     "11GB_Backup":       "backup dos bancos, do .env e do workflow",
     "11GB_Promocoes":    "promoções do SGP (antiguidade do encarregado no SDO)",
 }
@@ -227,6 +236,26 @@ QR_COOLDOWNS_MIN = [60, 120, 240, 480, 960, 1440]
 QR_RODADAS = RAIZ / "logs" / "bia_watchdog_qr_rodadas.txt"
 CONNECTING_STAMP    = RAIZ / "logs" / "bia_watchdog_connecting.txt"
 CONNECTING_GRACA_MIN = 15  # tempo que toleramos 'connecting' antes de tratar como queda
+
+# LIÇÃO DE 11-12/11/2026 (e já em 06/11): o 'close' também precisa de tolerância.
+# A sessão caiu às 21:53:39 (keep-alive 408) e o watchdog chamou /instance/connect
+# às 21:53:43, enquanto a própria Evolution já reconectava. Ficaram DOIS sockets
+# com as mesmas credenciais, um derrubando o outro ("stream:error conflict
+# type=replaced") a cada 4 s — 861 vezes até 08:35 do dia seguinte, com a B.I.A.
+# muda a noite toda. Agora: 'close' só vira pedido de QR depois de
+# FECHADA_GRACA_MIN seguidos, e o estado é relido logo antes do connect.
+FECHADA_STAMP      = RAIZ / "logs" / "bia_watchdog_fechada.txt"
+FECHADA_GRACA_MIN  = 10
+
+# Se mesmo assim aparecer conexão duplicada, o remédio é um `docker restart`
+# (mata os dois sockets e a Evolution volta com um só). Limitado a 1 a cada
+# REINICIO_CONFLITO_MIN, para não virar outro laço.
+REINICIO_CONFLITO_STAMP = RAIZ / "logs" / "bia_watchdog_reinicio_conflito.txt"
+REINICIO_CONFLITO_MIN   = 30
+# Ocorrências de '"type":"replaced"' nos últimos 3 min que indicam socket
+# duplicado. Cada conflito escreve o texto 2 vezes na linha de log; 10 = 5
+# conflitos. No laço de 11/11 eram ~90 a cada 3 min.
+CONFLITOS_LIMIAR        = 10
 
 
 def log(nivel, msg):
@@ -752,8 +781,58 @@ def subir_containers(faltando):
             log("ERROR", f"falha ao subir {c}: {e}")
 
 
+def _conflitos_recentes():
+    """Quantos 'conflict replaced' a Evolution registrou nos últimos 3 min."""
+    import subprocess
+    try:
+        r = subprocess.run(["docker", "logs", "--since", "3m", "evolution_11gb"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+    except Exception as e:
+        log("ERROR", f"não consegui ler o log da Evolution: {e}")
+        return 0
+    return (r.stdout + r.stderr).count('"type":"replaced"')
+
+
+def _desfazer_conexao_duplicada():
+    """Reinicia a Evolution se houver socket duplicado. True se reiniciou."""
+    n = _conflitos_recentes()
+    if n < CONFLITOS_LIMIAR:
+        return False
+    desde = _agora_menos(REINICIO_CONFLITO_STAMP)
+    if desde is not None and desde < REINICIO_CONFLITO_MIN:
+        log("ALERTA", f"{n} conflitos 'replaced' em 3 min, mas já reiniciei há {desde:.0f}min — "
+                      f"aguardando (limite 1 a cada {REINICIO_CONFLITO_MIN}min)")
+        return False
+    import subprocess
+    log("ALERTA", f"{n} conflitos 'replaced' em 3 min (conexão duplicada) — reiniciando evolution_11gb")
+    _carimbar(REINICIO_CONFLITO_STAMP)
+    try:
+        subprocess.run(["docker", "restart", "evolution_11gb"], capture_output=True, timeout=120)
+    except Exception as e:
+        log("ERROR", f"falha ao reiniciar evolution_11gb: {e}")
+        return False
+    notificar("⚠️ B.I.A.: conexão duplicada desfeita",
+              f"{n} conflitos 'replaced' em 3 min. Reiniciei a Evolution; se ela voltar em "
+              f"'connecting' pedindo QR, é preciso parear com o QR ao vivo.")
+    return True
+
+
+def _estado_agora():
+    try:
+        r = requests.get(f"{API_URL}/instance/connectionState/{INSTANCE}",
+                         headers={"apikey": API_KEY}, timeout=8)
+        return r.json().get("instance", {}).get("state")
+    except Exception:
+        return None
+
+
 def checar_uma_vez():
     """Retorna True se instância está OK, False se caiu ou erro."""
+    # Conexão duplicada primeiro: com dois sockets o estado oscila entre open e
+    # close, e nenhuma das regras abaixo resolve — só o restart.
+    if _desfazer_conexao_duplicada():
+        return False
+
     try:
         r = requests.get(f"{API_URL}/instance/connectionState/{INSTANCE}",
                          headers={"apikey": API_KEY}, timeout=8)
@@ -790,9 +869,13 @@ def checar_uma_vez():
             log("OK", "instância open (heartbeat)")
             HB_FILE.parent.mkdir(parents=True, exist_ok=True)
             HB_FILE.write_text(agora.isoformat())
-        # saiu do 'connecting': zera o carimbo de tolerância
+        # saiu do 'connecting'/'close': zera os carimbos de tolerância
         if CONNECTING_STAMP.exists():
             CONNECTING_STAMP.unlink(missing_ok=True)
+        if FECHADA_STAMP.exists():
+            log("OK", f"instância voltou a 'open' sozinha "
+                      f"(fechada por {_agora_menos(FECHADA_STAMP) or 0:.0f}min)")
+            FECHADA_STAMP.unlink(missing_ok=True)
         # Pareou: a escada de cooldown do QR volta ao primeiro degrau.
         if QR_STAMP.exists() or QR_RODADAS.exists():
             _zerar_escada_qr()
@@ -812,7 +895,18 @@ def checar_uma_vez():
             return False
         log("ALERTA", f"'connecting' há {faz:.0f}min — tratando como queda")
     else:
-        log("ALERTA", f"instância state={state!r} — B.I.A. fora do ar")
+        # 'close' recém-visto: a Evolution costuma reconectar sozinha. Chamar
+        # connect agora abre o segundo socket (ver FECHADA_GRACA_MIN).
+        faz = _agora_menos(FECHADA_STAMP)
+        if faz is None:
+            _carimbar(FECHADA_STAMP)
+            log("ALERTA", f"instância state={state!r} — aguardando {FECHADA_GRACA_MIN}min a "
+                          f"reconexão automática antes de pedir QR")
+            return False
+        if faz < FECHADA_GRACA_MIN:
+            log("INFO", f"state={state!r} há {faz:.0f}min — dentro da tolerância")
+            return False
+        log("ALERTA", f"instância state={state!r} há {faz:.0f}min — B.I.A. fora do ar")
 
     # Cooldown do QR: gerar QR a cada 5min durante uma queda é justamente o
     # comportamento que o WhatsApp penaliza (soft-ban). A espera cresce a cada
@@ -833,6 +927,13 @@ def checar_uma_vez():
                   f"que ele puxa um QR novo na hora. O PNG salvo em "
                   f"{QR_FILE.name} expira em segundos e a esta altura já morreu.")
         return False
+
+    # Relê o estado logo antes do connect: se a Evolution reconectou (ou está
+    # reconectando) nesse meio-tempo, um connect agora seria o segundo socket.
+    agora_st = _estado_agora()
+    if agora_st == "open" or (agora_st == "connecting" and state != "connecting"):
+        log("INFO", f"estado mudou para {agora_st!r} antes do QR — não chamo connect")
+        return agora_st == "open"
 
     ok_qr = puxar_qr_fresh()
     if ok_qr:

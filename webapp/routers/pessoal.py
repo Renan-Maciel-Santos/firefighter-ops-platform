@@ -8,7 +8,8 @@ from database import get_db
 from models import Usuario
 from acesso import pode_ver
 from efetivo_regras import (SQL_PARTE, SQL_OPERACIONAL, PARTES_EM,
-                            SQL_PARTE_QPO, SQL_VAGA_OPERACIONAL)
+                            SQL_PARTE_QPO, SQL_VAGA_OPERACIONAL,
+                            SQL_SECAO_ADM, SQL_SECAO_ADM_QPO, SQL_CIRCULO, SQL_CIRCULO_QPO)
 from routers.auth import get_current_user
 
 router = APIRouter(prefix="/pessoal", tags=["pessoal"])
@@ -185,6 +186,123 @@ def forca_operacional(db: Session = Depends(get_db), current_user: Usuario = Dep
         sum(r["operacional"] for r in out),
     ))
     return out
+
+
+@router.get("/forca-administrativa")
+def forca_administrativa(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+    """Vagas administrativas do QPO contra os militares administrativos, por lotação.
+
+    Espelho de /forca-operacional, pedido pelo Maj em 11/11/2026. Vaga ADM é a
+    vaga do QPO que NÃO é de atividade-fim (Comando, Adm e sede de Pelotão nos
+    SGBs; no EM, tudo fora do COBOM e dos Subten/Sgt da SAT); militar ADM é o
+    ativo que NÃO é operacional. Mesmos fragmentos de efetivo_regras.py, então
+    vaga ADM + vaga operacional = vagas do QPO (sem as "a designar") e militar
+    ADM + operacional = efetivo da lotação.
+    """
+    check_access(current_user)
+
+    vagas = {
+        r["parte"]: int(r["vagas"] or 0)
+        for r in db.execute(text(f"""
+            SELECT {SQL_PARTE_QPO}                                                    AS parte,
+                   SUM(vagas) FILTER (WHERE NOT a_designar AND NOT ({SQL_VAGA_OPERACIONAL})) AS vagas
+              FROM b1.qpo_funcoes
+             GROUP BY 1
+        """)).mappings().all()
+    }
+    adms = {
+        r["parte"]: int(r["adm"])
+        for r in db.execute(text(f"""
+            SELECT {SQL_PARTE}                                      AS parte,
+                   COUNT(*) FILTER (WHERE NOT ({SQL_OPERACIONAL}))  AS adm
+              FROM b1.efetivo
+             WHERE ativo = true
+             GROUP BY 1
+        """)).mappings().all()
+    }
+
+    def linha(rotulo, v, a):
+        return {
+            "lotacao": rotulo,
+            "vagas_administrativas": v,
+            "administrativo": a,
+            "claro": v - a,
+            "perc_ocupacao": round(100 * a / v, 1) if v else None,
+        }
+
+    out = []
+    for parte in ("1°Sgb", "2°Sgb", "3°Sgb", "4°Sgb") + PARTES_EM + ("Outros",):
+        v, a = vagas.get(parte, 0), adms.get(parte, 0)
+        if v or a:
+            out.append(linha(parte, v, a))
+
+    out.append(linha(
+        "TOTAL GERAL",
+        sum(r["vagas_administrativas"] for r in out),
+        sum(r["administrativo"] for r in out),
+    ))
+    return out
+
+
+_ORDEM_CIRCULO = {"Oficiais": 0, "Subten/Sgt": 1, "Cb/Sd": 2}
+
+
+@router.get("/forca-administrativa-secoes")
+def forca_administrativa_secoes(db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+    """O administrativo por seção e círculo (Oficiais, Subten/Sgt, Cb/Sd), com
+    os militares de cada uma, e a lista de onde o existente passa do QPO.
+
+    Mesmo recorte de /forca-administrativa (vaga e militar não operacionais);
+    a seção vem de SQL_SECAO_ADM / SQL_SECAO_ADM_QPO em efetivo_regras.py.
+    Quem está "acima" é a seção e círculo inteiros: o painel não escolhe qual
+    militar sobra — isso é decisão do Comando.
+    """
+    check_access(current_user)
+
+    vagas = db.execute(text(f"""
+        SELECT {SQL_PARTE_QPO} AS parte, {SQL_SECAO_ADM_QPO} AS secao, {SQL_CIRCULO_QPO} AS circulo,
+               SUM(vagas) AS vagas
+          FROM b1.qpo_funcoes
+         WHERE NOT a_designar AND NOT ({SQL_VAGA_OPERACIONAL})
+         GROUP BY 1, 2, 3
+    """)).mappings().all()
+    militares = db.execute(text(f"""
+        SELECT {SQL_PARTE} AS parte, {SQL_SECAO_ADM} AS secao, {SQL_CIRCULO} AS circulo,
+               re, posto_grad, nome, opm_atual
+          FROM b1.efetivo
+         WHERE ativo = true AND NOT ({SQL_OPERACIONAL})
+         ORDER BY posto_grad, nome
+    """)).mappings().all()
+
+    chave = lambda r: (r["parte"], r["secao"], r["circulo"])  # noqa: E731
+    celulas = {}
+    for v in vagas:
+        celulas.setdefault(chave(v), {"vagas": 0, "militares": []})["vagas"] = int(v["vagas"] or 0)
+    for m in militares:
+        celulas.setdefault(chave(m), {"vagas": 0, "militares": []})["militares"].append(
+            {"re": m["re"], "posto_grad": m["posto_grad"], "nome": m["nome"], "opm": m["opm_atual"]})
+
+    ordem_parte = {p: i for i, p in enumerate(("1°Sgb", "2°Sgb", "3°Sgb", "4°Sgb") + PARTES_EM + ("Outros",))}
+    secoes = {}
+    for (parte, secao, circ), c in celulas.items():
+        s = secoes.setdefault((parte, secao), {"lotacao": parte, "secao": secao, "vagas": 0,
+                                                "existente": 0, "circulos": []})
+        s["vagas"] += c["vagas"]
+        s["existente"] += len(c["militares"])
+        s["circulos"].append({"circulo": circ, "vagas": c["vagas"], "existente": len(c["militares"]),
+                              "militares": c["militares"]})
+    lista = sorted(secoes.values(), key=lambda s: (ordem_parte.get(s["lotacao"], 99), s["secao"]))
+    for s in lista:
+        s["circulos"].sort(key=lambda c: _ORDEM_CIRCULO.get(c["circulo"], 9))
+        s["claro"] = s["vagas"] - s["existente"]
+
+    acima = [
+        {"lotacao": s["lotacao"], "secao": s["secao"], "circulo": c["circulo"], "vagas": c["vagas"],
+         "existente": c["existente"], "excesso": c["existente"] - c["vagas"], "militares": c["militares"]}
+        for s in lista for c in s["circulos"] if c["existente"] > c["vagas"]
+    ]
+    return {"secoes": lista, "acima": acima,
+            "total_excesso": sum(a["excesso"] for a in acima)}
 
 
 @router.get("/efetivo")
